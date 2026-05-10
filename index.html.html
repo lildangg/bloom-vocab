@@ -7,22 +7,31 @@
 <title>Bloom — English Vocabulary</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
+<script type="module">
+  // Import the functions you need from the SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-   
-const firebaseConfig = {
-  apiKey: "AIzaSyAbyctEFn8CEutjJ9V2VZpWCqlBF3Y6Nmg",
-  authDomain: "bloom-vocab.firebaseapp.com",
-  projectId: "bloom-vocab",
-  storageBucket: "bloom-vocab.firebasestorage.app",
-  messagingSenderId: "602258789171",
-  appId: "1:602258789171:web:b83b7c0e78d3fdd01ce446",
-  measurementId: "G-KPRMLPZ6CF"
+  const firebaseConfig = {
+    apiKey: "AIzaSyAbyctEFn8CEutjJ9V2VZpWCqlBF3Y6Nmg",
+    authDomain: "bloom-vocab.firebaseapp.com",
+    projectId: "bloom-vocab",
+    storageBucket: "bloom-vocab.firebasestorage.app",
+    messagingSenderId: "602258789171",
+    appId: "1:602258789171:web:b83b7c0e78d3fdd01ce446",
+    measurementId: "G-KPRMLPZ6CF",   
+    databaseURL: "https://console.firebase.google.com/project/bloom-vocab/database/bloom-vocab-default-rtdb/data/~2F" 
   };
-
+   
   const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const db = getDatabase(app);
+  
+  window._fb = { db, ref, set, get, onValue, push, remove, update };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fbReady'));
+</script>
 
-  // Expose DB helpers globally so the rest of the script can use them
+  // Expose DB 
   window._fb = { db, ref, set, get, onValue, push, remove, update };
   window._fbReady = true;
   document.dispatchEvent(new Event('fbReady'));
@@ -42,18 +51,18 @@ const firebaseConfig = {
 }
 body { font-family:'DM Sans',sans-serif; background:var(--rose-bg); color:var(--text-main); min-height:100vh; display:flex; flex-direction:column; }
 
-/* ── SETUP BANNER ── */
+/*  SETUP BANNER  */
 #setup-banner { background:#fff3cd; border-bottom:1px solid #ffc107; padding:10px 24px; font-size:13px; color:#856404; display:flex; align-items:center; gap:10px; }
 #setup-banner a { color:#533f03; font-weight:500; }
 #setup-banner button { margin-left:auto; background:none; border:none; cursor:pointer; font-size:16px; color:#856404; }
 
-/* ── SYNC STATUS ── */
+/* SYNC STATUS  */
 #sync-status { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-light); padding:4px 8px; border-radius:20px; flex-shrink:0; }
 #sync-status.ok { color:#2e7d32; }
 #sync-status.err { color:#c62828; }
 #sync-status .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
 
-/* ── HEADER ── */
+/* HEADER */
 header { display:flex; align-items:center; justify-content:space-between; padding:14px 26px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; gap:10px; }
 .logo { font-family:'DM Serif Display',serif; font-size:21px; color:var(--pink-500); letter-spacing:-0.5px; display:flex; align-items:center; gap:7px; flex-shrink:0; }
 .logo-dot { width:7px; height:7px; border-radius:50%; background:var(--pink-300); }
@@ -64,10 +73,10 @@ nav button.active { background:var(--pink-50); color:var(--pink-500); font-weigh
 .header-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .streak-badge { display:flex; align-items:center; gap:5px; background:var(--pink-50); border:1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:12px; color:var(--pink-500); font-weight:500; }
 
-/* ── SHELL ── */
+/* SHELL */
 .app-shell { display:flex; flex:1; min-height:0; }
 
-/* ── SIDEBAR ── */
+/*  SIDEBAR */
 .sidebar { width:220px; flex-shrink:0; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
 .sidebar-header { padding:16px 13px 8px; }
 .sidebar-label { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:9px; }
@@ -95,7 +104,7 @@ nav button.active { background:var(--pink-50); color:var(--pink-500); font-weigh
 .group-act-btn:hover { color:var(--pink-500); }
 .group-act-btn.del:hover { color:#e53e3e; }
 
-/* ── MAIN ── */
+/* MAIN  */
 main { flex:1; padding:26px 28px; overflow-y:auto; }
 .view { display:none; animation:fadeIn 0.18s ease; }
 .view.active { display:block; }
@@ -103,14 +112,14 @@ main { flex:1; padding:26px 28px; overflow-y:auto; }
 .section-title { font-family:'DM Serif Display',serif; font-size:25px; color:var(--text-main); margin-bottom:3px; letter-spacing:-0.3px; }
 .section-sub { font-size:13px; color:var(--text-muted); margin-bottom:20px; }
 
-/* ── NICKNAME ── */
+/*  NICKNAME  */
 .nick-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 14px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
 .nick-bar label { font-size:12px; color:var(--text-muted); flex-shrink:0; }
 .nick-bar input { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; padding:5px 9px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); outline:none; max-width:160px; }
 .nick-bar input:focus { border-color:var(--pink-300); }
 .nick-bar .nick-tip { font-size:11px; color:var(--text-light); }
 
-/* ── GROUP BANNER ── */
+/* GROUP BANNER */
 .group-banner { display:flex; align-items:center; gap:9px; margin-bottom:16px; padding:11px 15px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
 .group-banner-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 .group-banner-name { font-family:'DM Serif Display',serif; font-size:17px; flex:1; }
@@ -118,7 +127,7 @@ main { flex:1; padding:26px 28px; overflow-y:auto; }
 .group-edit-btn { background:none; border:none; font-size:12px; color:var(--text-muted); cursor:pointer; padding:3px 7px; border-radius:var(--radius-sm); }
 .group-edit-btn:hover { color:var(--pink-500); }
 
-/* ── WORD FORM ── */
+/* WORD FORM  */
 .add-word-form { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
 .add-word-form input,.add-word-form select { font-family:'DM Sans',sans-serif; font-size:13px; padding:8px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
 .add-word-form input:focus { border-color:var(--pink-300); }
@@ -130,7 +139,7 @@ main { flex:1; padding:26px 28px; overflow-y:auto; }
 .btn-ghost { background:none; border:1px solid var(--border-strong); color:var(--text-muted); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 12px; border-radius:var(--radius-md); transition:all 0.15s; }
 .btn-ghost:hover { border-color:var(--pink-300); color:var(--pink-500); background:var(--pink-50); }
 
-/* ── WORD CARD ── */
+/*  WORD CARD  */
 .word-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:12px 15px; margin-bottom:7px; display:flex; align-items:flex-start; gap:10px; transition:box-shadow 0.15s; }
 .word-card:hover { box-shadow:var(--shadow-card); }
 .word-num { font-size:10px; color:var(--text-light); font-weight:500; min-width:18px; padding-top:3px; text-align:right; }
@@ -149,20 +158,20 @@ main { flex:1; padding:26px 28px; overflow-y:auto; }
 .empty-state { text-align:center; padding:44px 0; color:var(--text-light); font-size:13px; }
 .empty-state p:first-child { font-size:26px; margin-bottom:8px; }
 
-/* ── LOADING OVERLAY ── */
+/*  LOADING OVERLAY */
 #loading-overlay { position:fixed; inset:0; background:var(--rose-bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:200; }
 #loading-overlay .logo2 { font-family:'DM Serif Display',serif; font-size:32px; color:var(--pink-500); }
 .spin-dots { display:flex; gap:6px; }
 .spin-dot { width:8px; height:8px; border-radius:50%; background:var(--pink-300); animation:aiPulse 1.2s ease-in-out infinite; }
 .spin-dot:nth-child(2){animation-delay:0.2s}.spin-dot:nth-child(3){animation-delay:0.4s}
 
-/* ── SCOPE SELECTOR ── */
+/* SCOPE SELECTOR*/
 .scope-selector { display:flex; align-items:center; gap:9px; margin-bottom:20px; flex-wrap:wrap; }
 .scope-selector label { font-size:13px; color:var(--text-muted); }
 .scope-selector select { font-family:'DM Sans',sans-serif; font-size:13px; padding:6px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; cursor:pointer; }
 .scope-selector select:focus { border-color:var(--pink-300); }
 
-/* ── FLASHCARD ── */
+/*  FLASHCARD  */
 .fc-controls { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
 .fc-progress-bar { flex:1; height:3px; background:var(--pink-100); border-radius:4px; margin:0 13px; overflow:hidden; }
 .fc-progress-fill { height:100%; background:var(--pink-400); border-radius:4px; transition:width 0.4s ease; }
@@ -187,7 +196,7 @@ main { flex:1; padding:26px 28px; overflow-y:auto; }
 .fc-empty { text-align:center; padding:48px 0; color:var(--text-light); }
 .fc-empty p:first-child { font-size:32px; margin-bottom:8px; }
 
-/* ── RESULT ── */
+/* RESULT */
 .result-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:32px; text-align:center; max-width:320px; margin:0 auto; }
 .result-icon { font-size:40px; margin-bottom:8px; }
 .result-score { font-family:'DM Serif Display',serif; font-size:40px; color:var(--pink-500); margin-bottom:3px; }
