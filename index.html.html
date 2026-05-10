@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bloom — English Vocabulary</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --pink-50:#FFF0F5;--pink-100:#FFD6E7;--pink-200:#FFB3CF;--pink-300:#FF85B3;
+  --pink-400:#F2607A;--pink-500:#D94070;--pink-600:#B02158;
+  --rose-bg:#FDF5F8;--card-bg:#FFFBFD;
+  --text-main:#2A1420;--text-muted:#8B5F72;--text-light:#C4A0B0;
+  --border:#F0D0DD;--border-strong:#E8B4C4;--white:#FFFFFF;
+  --radius-sm:8px;--radius-md:14px;--radius-lg:22px;--radius-xl:32px;
+  --shadow-soft:0 4px 24px rgba(185,60,110,0.08);
+  --shadow-card:0 2px 16px rgba(185,60,110,0.1);
+}
+body { font-family:'DM Sans',sans-serif; background:var(--rose-bg); color:var(--text-main); min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+header { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; gap:12px; }
+.logo { font-family:'DM Serif Display',serif; font-size:22px; color:var(--pink-500); letter-spacing:-0.5px; display:flex; align-items:center; gap:7px; flex-shrink:0; }
+.logo-dot { width:7px; height:7px; border-radius:50%; background:var(--pink-300); }
+nav { display:flex; gap:2px; }
+nav button { background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-muted); padding:7px 13px; border-radius:var(--radius-md); transition:all 0.15s; }
+nav button:hover { background:var(--pink-50); color:var(--pink-500); }
+nav button.active { background:var(--pink-50); color:var(--pink-500); font-weight:500; border:1px solid var(--border); }
+.streak-badge { display:flex; align-items:center; gap:5px; background:var(--pink-50); border:1px solid var(--border); padding:5px 11px; border-radius:20px; font-size:12px; color:var(--pink-500); font-weight:500; flex-shrink:0; }
+
+/* SHELL */
+.app-shell { display:flex; flex:1; min-height:0; }
+
+/* SIDEBAR */
+.sidebar { width:224px; flex-shrink:0; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar-header { padding:18px 14px 10px; }
+.sidebar-label { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:10px; }
+.new-group-form { display:flex; gap:6px; }
+.new-group-form input { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--rose-bg); color:var(--text-main); outline:none; min-width:0; }
+.new-group-form input:focus { border-color:var(--pink-300); }
+.new-group-form button { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-sm); padding:7px 10px; cursor:pointer; font-size:18px; line-height:1; flex-shrink:0; }
+.new-group-form button:hover { background:var(--pink-500); }
+.sidebar-all { display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin:8px 8px 2px; }
+.sidebar-all:hover { background:var(--pink-50); }
+.sidebar-all.active { background:var(--pink-50); border:1px solid var(--border); }
+.sidebar-all .sa-label { font-size:13px; color:var(--text-main); flex:1; }
+.sidebar-all.active .sa-label { color:var(--pink-500); font-weight:500; }
+.group-list { flex:1; padding:4px 8px 16px; }
+.group-item { display:flex; align-items:center; gap:7px; padding:8px 10px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin-bottom:2px; }
+.group-item:hover { background:var(--pink-50); }
+.group-item.active { background:var(--pink-50); border:1px solid var(--border); }
+.group-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.group-name { font-size:13px; color:var(--text-main); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.group-item.active .group-name { color:var(--pink-500); font-weight:500; }
+.group-count { font-size:11px; color:var(--text-light); flex-shrink:0; }
+.group-actions { display:flex; gap:2px; opacity:0; transition:opacity 0.15s; }
+.group-item:hover .group-actions { opacity:1; }
+.group-act-btn { background:none; border:none; color:var(--text-light); cursor:pointer; font-size:13px; padding:2px 4px; border-radius:4px; }
+.group-act-btn:hover { color:var(--pink-500); }
+.group-act-btn.del:hover { color:#e53e3e; }
+
+/* MAIN */
+main { flex:1; padding:28px 30px; overflow-y:auto; }
+.view { display:none; animation:fadeIn 0.18s ease; }
+.view.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none} }
+
+.section-title { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-main); margin-bottom:4px; letter-spacing:-0.3px; }
+.section-sub { font-size:13px; color:var(--text-muted); margin-bottom:22px; }
+
+/* GROUP BANNER */
+.group-banner { display:flex; align-items:center; gap:10px; margin-bottom:18px; padding:12px 16px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.group-banner-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.group-banner-name { font-family:'DM Serif Display',serif; font-size:18px; flex:1; }
+.group-banner-count { font-size:12px; color:var(--text-light); }
+.group-edit-btn { background:none; border:none; font-size:12px; color:var(--text-muted); cursor:pointer; padding:3px 8px; border-radius:var(--radius-sm); }
+.group-edit-btn:hover { color:var(--pink-500); }
+
+/* WORD FORM */
+.add-word-form { display:flex; gap:7px; margin-bottom:18px; flex-wrap:wrap; }
+.add-word-form input, .add-word-form select { font-family:'DM Sans',sans-serif; font-size:13px; padding:8px 11px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
+.add-word-form input:focus { border-color:var(--pink-300); }
+.add-word-form input.word-input { flex:1; min-width:90px; }
+.add-word-form input.def-input { flex:2; min-width:150px; }
+.btn-primary { background:var(--pink-400); color:white; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 18px; border-radius:var(--radius-md); transition:background 0.15s,transform 0.1s; white-space:nowrap; }
+.btn-primary:hover { background:var(--pink-500); }
+.btn-primary:active { transform:scale(0.98); }
+.btn-ghost { background:none; border:1px solid var(--border-strong); color:var(--text-muted); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 13px; border-radius:var(--radius-md); transition:all 0.15s; }
+.btn-ghost:hover { border-color:var(--pink-300); color:var(--pink-500); background:var(--pink-50); }
+
+/* WORD CARD */
+.word-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:13px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:11px; transition:box-shadow 0.15s; }
+.word-card:hover { box-shadow:var(--shadow-card); }
+.word-num { font-size:10px; color:var(--text-light); font-weight:500; min-width:18px; padding-top:3px; text-align:right; }
+.word-body { flex:1; min-width:0; }
+.word-term { font-family:'DM Serif Display',serif; font-size:17px; color:var(--text-main); }
+.word-pos { display:inline-block; font-size:10px; background:var(--pink-50); color:var(--pink-500); border:1px solid var(--border); padding:1px 7px; border-radius:20px; margin-left:5px; font-style:italic; font-family:'DM Serif Display',serif; vertical-align:middle; }
+.word-def { font-size:12px; color:var(--text-muted); margin-top:3px; line-height:1.5; }
+.word-group-tag { display:inline-block; font-size:10px; padding:1px 8px; border-radius:20px; margin-top:4px; font-weight:500; }
+.word-actions { display:flex; gap:4px; align-items:center; flex-shrink:0; }
+.word-actions button { background:none; border:none; cursor:pointer; font-size:15px; color:var(--text-light); padding:3px 4px; border-radius:var(--radius-sm); transition:color 0.15s; }
+.word-actions button:hover { color:var(--pink-400); }
+.word-actions button.del:hover { color:#e53e3e; }
+.empty-state { text-align:center; padding:48px 0; color:var(--text-light); font-size:13px; }
+.empty-state p:first-child { font-size:28px; margin-bottom:8px; }
+
+/* SCOPE SELECTOR */
+.scope-selector { display:flex; align-items:center; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
+.scope-selector label { font-size:13px; color:var(--text-muted); }
+.scope-selector select { font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 11px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; cursor:pointer; }
+.scope-selector select:focus { border-color:var(--pink-300); }
+
+/* FLASHCARD */
+.fc-controls { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+.fc-progress-bar { flex:1; height:3px; background:var(--pink-100); border-radius:4px; margin:0 14px; overflow:hidden; }
+.fc-progress-fill { height:100%; background:var(--pink-400); border-radius:4px; transition:width 0.4s ease; }
+.fc-count { font-size:12px; color:var(--text-muted); font-weight:500; white-space:nowrap; }
+.flashcard-stage { perspective:1000px; margin:0 auto 22px; max-width:480px; height:250px; }
+.flashcard-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.55s cubic-bezier(.4,0,.2,1); cursor:pointer; }
+.flashcard-inner.flipped { transform:rotateY(180deg); }
+.fc-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:var(--radius-xl); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; }
+.fc-front { background:var(--white); border:1.5px solid var(--border); box-shadow:var(--shadow-soft); }
+.fc-back { background:linear-gradient(135deg,var(--pink-400) 0%,var(--pink-500) 100%); transform:rotateY(180deg); }
+.fc-word { font-family:'DM Serif Display',serif; font-size:34px; color:var(--text-main); text-align:center; letter-spacing:-0.5px; margin-bottom:6px; }
+.fc-pos-badge { font-family:'DM Serif Display',serif; font-style:italic; font-size:11px; color:var(--text-muted); background:var(--pink-50); border:1px solid var(--border); padding:2px 10px; border-radius:20px; }
+.fc-hint { font-size:11px; color:var(--text-light); margin-top:14px; }
+.fc-def { font-size:15px; color:white; text-align:center; line-height:1.65; }
+.fc-back-word { font-family:'DM Serif Display',serif; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:8px; font-style:italic; }
+.fc-nav { display:flex; align-items:center; justify-content:center; gap:9px; }
+.fc-nav-btn { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
+.fc-nav-btn:hover { border-color:var(--pink-300); color:var(--pink-500); background:var(--pink-50); }
+.fc-nav-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.fc-know-btn { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-md); padding:8px 18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; }
+.fc-know-btn:hover { background:var(--pink-500); }
+.fc-empty { text-align:center; padding:52px 0; color:var(--text-light); }
+.fc-empty p:first-child { font-size:34px; margin-bottom:8px; }
+
+/* RESULT */
+.result-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:34px; text-align:center; max-width:340px; margin:0 auto; }
+.result-icon { font-size:42px; margin-bottom:8px; }
+.result-score { font-family:'DM Serif Display',serif; font-size:42px; color:var(--pink-500); margin-bottom:4px; }
+.result-label { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+
+/* QUIZ */
+.quiz-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:30px 34px; max-width:480px; margin:0 auto; }
+.quiz-q { font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:5px; }
+.quiz-prompt { font-size:12px; color:var(--text-muted); margin-bottom:22px; }
+.quiz-choices { display:flex; flex-direction:column; gap:8px; }
+.quiz-choice { background:var(--rose-bg); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:10px 15px; font-size:13px; color:var(--text-main); cursor:pointer; transition:all 0.15s; text-align:left; font-family:'DM Sans',sans-serif; }
+.quiz-choice:hover:not(:disabled) { border-color:var(--pink-300); background:var(--pink-50); }
+.quiz-choice.correct { border-color:#4caf50; background:#f0fff0; color:#2e7d32; }
+.quiz-choice.wrong { border-color:#f44336; background:#fff0f0; color:#c62828; }
+.quiz-choice:disabled { cursor:default; }
+
+/* DISCOVER */
+.suggest-search { display:flex; gap:8px; margin-bottom:22px; }
+.suggest-search input { flex:1; font-family:'DM Sans',sans-serif; font-size:14px; padding:10px 13px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
+.suggest-search input:focus { border-color:var(--pink-300); }
+.suggest-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.suggest-col-title { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:8px; }
+.suggest-pill { display:inline-flex; align-items:center; gap:4px; background:var(--white); border:1px solid var(--border); border-radius:20px; padding:4px 10px 4px 8px; font-size:12px; color:var(--text-main); cursor:pointer; margin:3px; transition:all 0.15s; }
+.suggest-pill:hover { border-color:var(--pink-300); background:var(--pink-50); color:var(--pink-500); }
+.suggest-pill.syn { border-color:#b0d8b0; background:#f2faf2; }
+.suggest-pill.ant { border-color:#d8b0b0; background:#faf2f2; }
+.suggest-word-info { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:18px; }
+.suggest-word-big { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-main); margin-bottom:4px; }
+.suggest-word-def { font-size:13px; color:var(--text-muted); line-height:1.5; }
+.ai-loading { display:flex; gap:4px; padding:10px 0; align-items:center; }
+.ai-dot { width:6px; height:6px; border-radius:50%; background:var(--pink-300); animation:aiPulse 1.4s ease-in-out infinite; }
+.ai-dot:nth-child(2){animation-delay:0.2s}.ai-dot:nth-child(3){animation-delay:0.4s}
+@keyframes aiPulse{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+/* STATS */
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:22px; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; text-align:center; }
+.stat-num { font-family:'DM Serif Display',serif; font-size:32px; color:var(--pink-500); }
+.stat-label { font-size:11px; color:var(--text-muted); margin-top:3px; }
+.learned-list { display:flex; flex-wrap:wrap; gap:6px; }
+.learned-pill { background:var(--pink-50); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; color:var(--pink-500); font-weight:500; }
+
+/* MODAL */
+.modal-backdrop { position:fixed; inset:0; background:rgba(42,20,32,0.35); z-index:100; display:flex; align-items:center; justify-content:center; }
+.modal { background:var(--white); border-radius:var(--radius-xl); padding:26px 30px; min-width:300px; max-width:400px; width:90%; }
+.modal h3 { font-family:'DM Serif Display',serif; font-size:19px; margin-bottom:14px; }
+.modal input { width:100%; font-family:'DM Sans',sans-serif; font-size:14px; padding:9px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-md); outline:none; margin-bottom:14px; }
+.modal input:focus { border-color:var(--pink-300); }
+.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--pink-200);border-radius:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-dot"></span>bloom</div>
+  <nav>
+    <button class="active" onclick="showView('list')">Words</button>
+    <button onclick="showView('flashcard')">Flashcards</button>
+    <button onclick="showView('quiz')">Quiz</button>
+    <button onclick="showView('suggest')">Discover</button>
+    <button onclick="showView('stats')">Progress</button>
+  </nav>
+  <div class="streak-badge">🌸 <span id="streak-count">0</span> day streak</div>
+</header>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-label">Collections</div>
+      <div class="new-group-form">
+        <input id="new-group-inp" type="text" placeholder="New collection…" maxlength="30" onkeydown="if(event.key==='Enter')createGroup()" />
+        <button onclick="createGroup()" title="Add collection">+</button>
+      </div>
+    </div>
+    <div class="sidebar-all active" id="sidebar-all" onclick="selectGroup(null)">
+      <span style="font-size:13px">🌸</span>
+      <span class="sa-label">All Words</span>
+      <span class="group-count" id="all-count">0</span>
+    </div>
+    <div class="group-list" id="group-list"></div>
+  </aside>
+
+  <main>
+    <!-- WORDS -->
+    <div class="view active" id="view-list">
+      <div id="list-banner"></div>
+      <div class="add-word-form">
+        <input class="word-input" id="inp-word" type="text" placeholder="Word" onkeydown="if(event.key==='Enter')addWord()" />
+        <input class="def-input" id="inp-def" type="text" placeholder="Definition" onkeydown="if(event.key==='Enter')addWord()" />
+        <select id="inp-pos">
+          <option value="">POS</option>
+          <option value="noun">noun</option>
+          <option value="verb">verb</option>
+          <option value="adj">adj</option>
+          <option value="adv">adv</option>
+          <option value="phrase">phrase</option>
+        </select>
+        <button class="btn-primary" onclick="addWord()">+ Add</button>
+      </div>
+      <div id="word-list-container"></div>
+    </div>
+
+    <!-- FLASHCARDS -->
+    <div class="view" id="view-flashcard">
+      <h1 class="section-title">Flashcards</h1>
+      <p class="section-sub">Click a card to flip it. Mark words you know.</p>
+      <div class="scope-selector">
+        <label>Study from:</label>
+        <select id="fc-scope" onchange="renderFlashcard()"></select>
+      </div>
+      <div id="fc-area"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="view" id="view-quiz">
+      <h1 class="section-title">Quick Quiz</h1>
+      <p class="section-sub">Choose the correct definition for each word.</p>
+      <div class="scope-selector">
+        <label>Quiz on:</label>
+        <select id="quiz-scope" onchange="renderQuiz()"></select>
+      </div>
+      <div id="quiz-area"></div>
+    </div>
+
+    <!-- DISCOVER -->
+    <div class="view" id="view-suggest">
+      <h1 class="section-title">Discover Words</h1>
+      <p class="section-sub">Enter any word to get AI-powered synonyms and antonyms.</p>
+      <div class="suggest-search">
+        <input id="suggest-input" type="text" placeholder="Try: resilient, ephemeral, vivid…" onkeydown="if(event.key==='Enter')fetchSuggest()" />
+        <button class="btn-primary" onclick="fetchSuggest()">✦ Suggest</button>
+      </div>
+      <div id="suggest-results"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="view" id="view-stats">
+      <h1 class="section-title">My Progress</h1>
+      <p class="section-sub">Track how your vocabulary is growing.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total words</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-known">0</div><div class="stat-label">Known words</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Day streak 🌸</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Words mastered in flashcards:</p>
+      <div class="learned-list" id="learned-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- RENAME MODAL -->
+<div class="modal-backdrop" id="rename-modal" style="display:none" onclick="if(event.target===this)closeRename()">
+  <div class="modal">
+    <h3>Rename Collection</h3>
+    <input id="rename-inp" type="text" maxlength="30" onkeydown="if(event.key==='Enter')confirmRename()" />
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeRename()">Cancel</button>
+      <button class="btn-primary" onclick="confirmRename()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const W_KEY='bloom_words_v3', G_KEY='bloom_groups_v3', K_KEY='bloom_known_v3', S_KEY='bloom_streak_v3';
+let words=JSON.parse(localStorage.getItem(W_KEY)||'[]');
+let groups=JSON.parse(localStorage.getItem(G_KEY)||'[]');
+let knownSet=new Set(JSON.parse(localStorage.getItem(K_KEY)||'[]'));
+let activeGroupId=null;
+let renameTargetId=null;
+let currentView='list';
+
+const PALETTE=['#F2607A','#D94070','#C47AA0','#E89CC0','#B05070','#E06090','#FF85B3','#D06888','#904060','#E87090'];
+const pickColor=i=>PALETTE[i%PALETTE.length];
+
+const saveWords=()=>localStorage.setItem(W_KEY,JSON.stringify(words));
+const saveGroups=()=>localStorage.setItem(G_KEY,JSON.stringify(groups));
+const saveKnown=()=>localStorage.setItem(K_KEY,JSON.stringify([...knownSet]));
+
+function getStreak(){
+  const d=JSON.parse(localStorage.getItem(S_KEY)||'{"count":0,"last":""}');
+  const today=new Date().toDateString();
+  if(d.last===today)return d.count;
+  const count=d.last===new Date(Date.now()-864e5).toDateString()?d.count+1:1;
+  localStorage.setItem(S_KEY,JSON.stringify({count,last:today}));
+  return count;
+}
+const streak=getStreak();
+document.getElementById('streak-count').textContent=streak;
+
+// ── GROUPS ──
+function createGroup(){
+  const inp=document.getElementById('new-group-inp');
+  const name=inp.value.trim();
+  if(!name)return;
+  if(groups.find(g=>g.name.toLowerCase()===name.toLowerCase())){alert('Collection already exists.');return;}
+  const g={id:'g_'+Date.now(),name,color:pickColor(groups.length)};
+  groups.push(g); saveGroups(); inp.value='';
+  renderSidebar(); selectGroup(g.id);
+}
+
+function deleteGroup(id){
+  if(!confirm('Delete this collection? Words stay in "All Words".'))return;
+  groups=groups.filter(g=>g.id!==id);
+  words.forEach(w=>{if(w.groupId===id)w.groupId=null;});
+  saveGroups(); saveWords();
+  if(activeGroupId===id)selectGroup(null);
+  else{renderSidebar();}
+}
+
+let renameTarget=null;
+function openRename(id){
+  renameTarget=id;
+  const g=groups.find(g=>g.id===id);
+  document.getElementById('rename-inp').value=g?g.name:'';
+  document.getElementById('rename-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('rename-inp').select(),50);
+}
+function closeRename(){document.getElementById('rename-modal').style.display='none';renameTarget=null;}
+function confirmRename(){
+  const name=document.getElementById('rename-inp').value.trim();
+  if(!name)return;
+  const g=groups.find(g=>g.id===renameTarget);
+  if(g){g.name=name;saveGroups();renderSidebar();if(currentView==='list')renderBanner();}
+  closeRename();
+}
+
+function selectGroup(id){
+  activeGroupId=id;
+  document.querySelectorAll('.sidebar-all,.group-item').forEach(el=>el.classList.remove('active'));
+  if(id===null)document.getElementById('sidebar-all').classList.add('active');
+  else{const el=document.querySelector(`.group-item[data-id="${id}"]`);if(el)el.classList.add('active');}
+  renderBanner(); renderWordList();
+}
+
+function renderSidebar(){
+  document.getElementById('all-count').textContent=words.length;
+  document.getElementById('group-list').innerHTML=groups.map(g=>{
+    const cnt=words.filter(w=>w.groupId===g.id).length;
+    const active=activeGroupId===g.id?' active':'';
+    return `<div class="group-item${active}" data-id="${g.id}" onclick="selectGroup('${g.id}')">
+      <span class="group-dot" style="background:${g.color}"></span>
+      <span class="group-name">${esc(g.name)}</span>
+      <span class="group-count">${cnt}</span>
+      <span class="group-actions">
+        <button class="group-act-btn" onclick="event.stopPropagation();openRename('${g.id}')" title="Rename">✎</button>
+        <button class="group-act-btn del" onclick="event.stopPropagation();deleteGroup('${g.id}')" title="Delete">✕</button>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+// ── WORD LIST ──
+function visibleWords(){
+  return activeGroupId===null ? words : words.filter(w=>w.groupId===activeGroupId);
+}
+
+function renderBanner(){
+  const el=document.getElementById('list-banner');
+  if(activeGroupId===null){
+    el.innerHTML=`<div style="margin-bottom:16px"><h1 class="section-title">All Words</h1><p class="section-sub">Your entire vocabulary — ${words.length} word${words.length!==1?'s':''}.</p></div>`;
+  } else {
+    const g=groups.find(g=>g.id===activeGroupId);
+    if(!g){el.innerHTML='';return;}
+    const cnt=words.filter(w=>w.groupId===g.id).length;
+    el.innerHTML=`<div class="group-banner">
+      <span class="group-banner-dot" style="background:${g.color}"></span>
+      <span class="group-banner-name">${esc(g.name)}</span>
+      <span class="group-banner-count">${cnt} word${cnt!==1?'s':''}</span>
+      <button class="group-edit-btn" onclick="openRename('${g.id}')">rename</button>
+    </div>`;
+  }
+}
+
+function addWord(){
+  const w=document.getElementById('inp-word').value.trim();
+  const d=document.getElementById('inp-def').value.trim();
+  const p=document.getElementById('inp-pos').value;
+  if(!w||!d){alert('Please enter a word and definition.');return;}
+  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase())){alert('Already in your list!');return;}
+  words.unshift({word:w,def:d,pos:p,groupId:activeGroupId,added:Date.now()});
+  saveWords(); renderSidebar(); renderBanner(); renderWordList();
+  document.getElementById('inp-word').value='';
+  document.getElementById('inp-def').value='';
+  document.getElementById('inp-pos').value='';
+  document.getElementById('inp-word').focus();
+}
+
+function deleteWord(i){words.splice(i,1);saveWords();renderSidebar();renderBanner();renderWordList();}
+
+function moveWord(globalIdx,toGroupId){
+  words[globalIdx].groupId=(toGroupId===''||toGroupId==='null')?null:toGroupId;
+  saveWords();renderSidebar();renderWordList();
+}
+
+function renderWordList(){
+  const c=document.getElementById('word-list-container');
+  const vis=visibleWords();
+  if(!vis.length){
+    c.innerHTML=`<div class="empty-state"><p>🌸</p><p>${activeGroupId?'No words in this collection yet.':'No words yet. Add your first word above!'}</p></div>`;
+    return;
+  }
+  const groupOpts=`<option value="">move to…</option><option value="null">— No group —</option>`+groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  c.innerHTML=vis.map((w,vi)=>{
+    const gi=words.indexOf(w);
+    const g=w.groupId?groups.find(gr=>gr.id===w.groupId):null;
+    return `<div class="word-card">
+      <span class="word-num">${vis.length-vi}</span>
+      <div class="word-body">
+        <div class="word-term">${esc(w.word)}${w.pos?`<span class="word-pos">${esc(w.pos)}</span>`:''}</div>
+        <div class="word-def">${esc(w.def)}</div>
+        ${activeGroupId===null&&g?`<span class="word-group-tag" style="background:${g.color}22;color:${g.color};border:1px solid ${g.color}44">${esc(g.name)}</span>`:''}
+      </div>
+      <div class="word-actions">
+        ${groups.length?`<select style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:8px;background:var(--rose-bg);color:var(--text-muted);cursor:pointer;max-width:110px" onchange="moveWord(${gi},this.value);this.value=''">${groupOpts}</select>`:''}
+        <button title="Discover synonyms" onclick="discoverWord('${esc(w.word)}')">✦</button>
+        <button class="del" title="Delete" onclick="deleteWord(${gi})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── SCOPE SELECT ──
+function buildScopeOptions(selId){
+  const sel=document.getElementById(selId);
+  const prev=sel.value;
+  sel.innerHTML=`<option value="all">All Words (${words.length})</option>`+
+    groups.map(g=>{const cnt=words.filter(w=>w.groupId===g.id).length;return`<option value="${g.id}">${esc(g.name)} (${cnt})</option>`;}).join('');
+  if(prev&&(prev==='all'||groups.find(g=>g.id===prev)))sel.value=prev;
+}
+function getScopedWords(selId){
+  const v=document.getElementById(selId).value;
+  return(!v||v==='all')?words:words.filter(w=>w.groupId===v);
+}
+
+// ── NAVIGATION ──
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const idx=['list','flashcard','quiz','suggest','stats'].indexOf(name);
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+  currentView=name;
+  if(name==='flashcard'){buildScopeOptions('fc-scope');if(activeGroupId)document.getElementById('fc-scope').value=activeGroupId;renderFlashcard();}
+  if(name==='quiz'){buildScopeOptions('quiz-scope');if(activeGroupId)document.getElementById('quiz-scope').value=activeGroupId;renderQuiz();}
+  if(name==='stats')renderStats();
+  if(name==='list'){renderBanner();renderWordList();}
+}
+
+// ── FLASHCARD ──
+let fcIdx=0,fcFlipped=false,fcKnown=0,fcW=[];
+function renderFlashcard(){
+  const el=document.getElementById('fc-area');
+  fcW=getScopedWords('fc-scope');
+  if(!fcW.length){el.innerHTML=`<div class="fc-empty"><p>🌷</p><p>No words in this selection.</p></div>`;return;}
+  fcIdx=0;fcFlipped=false;fcKnown=0;renderFCC();
+}
+function renderFCC(){
+  const el=document.getElementById('fc-area');
+  if(fcIdx>=fcW.length){
+    const pct=Math.round((fcKnown/fcW.length)*100);
+    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${pct}%</div><div class="result-label">You knew ${fcKnown} of ${fcW.length} words</div><button class="btn-primary" onclick="renderFlashcard()">Restart</button></div>`;
+    return;
+  }
+  const w=fcW[fcIdx];
+  const prog=(fcIdx/fcW.length)*100;
+  el.innerHTML=`<div class="fc-controls">
+    <button class="fc-nav-btn" onclick="fcNav(-1)" ${fcIdx===0?'disabled':''}>← Back</button>
+    <div class="fc-progress-bar"><div class="fc-progress-fill" style="width:${prog}%"></div></div>
+    <span class="fc-count">${fcIdx+1} / ${fcW.length}</span>
+  </div>
+  <div class="flashcard-stage" onclick="flipFC()">
+    <div class="flashcard-inner" id="fci">
+      <div class="fc-face fc-front">
+        <div class="fc-word">${esc(w.word)}</div>
+        ${w.pos?`<span class="fc-pos-badge">${esc(w.pos)}</span>`:''}
+        <div class="fc-hint">tap to reveal</div>
+      </div>
+      <div class="fc-face fc-back">
+        <div class="fc-back-word">${esc(w.word)}</div>
+        <div class="fc-def">${esc(w.def)}</div>
+      </div>
+    </div>
+  </div>
+  <div class="fc-nav">
+    <button class="fc-nav-btn" onclick="fcSkip()">Skip</button>
+    <button class="fc-know-btn" onclick="fcKnow()">I know this ✓</button>
+  </div>`;
+}
+function flipFC(){const i=document.getElementById('fci');if(i){fcFlipped=!fcFlipped;i.classList.toggle('flipped',fcFlipped);}}
+function fcNav(d){fcIdx=Math.max(0,fcIdx+d);fcFlipped=false;renderFCC();}
+function fcSkip(){fcIdx++;fcFlipped=false;renderFCC();}
+function fcKnow(){knownSet.add(fcW[fcIdx].word.toLowerCase());saveKnown();fcKnown++;fcIdx++;fcFlipped=false;renderFCC();}
+
+// ── QUIZ ──
+let qIdx=0,qScore=0,qAnswered=false,qW=[];
+function renderQuiz(){
+  const el=document.getElementById('quiz-area');
+  qW=getScopedWords('quiz-scope');
+  if(qW.length<2){el.innerHTML=`<div class="fc-empty"><p>🌷</p><p>Need at least 2 words in this selection.</p></div>`;return;}
+  qIdx=0;qScore=0;qAnswered=false;renderQQ();
+}
+function renderQQ(){
+  const el=document.getElementById('quiz-area');
+  const total=Math.min(qW.length,10);
+  if(qIdx>=total){
+    const pct=Math.round((qScore/total)*100);
+    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${qScore}/${total}</div><div class="result-label">${pct>=80?'Excellent!':pct>=50?'Good job!':'Keep practicing!'}</div><button class="btn-primary" onclick="renderQuiz()">Try Again</button></div>`;
+    return;
+  }
+  const shuffled=[...qW].sort(()=>Math.random()-0.5);
+  const correct=shuffled[0];
+  const wrong=shuffled.slice(1,Math.min(4,shuffled.length));
+  const choices=[...wrong,correct].sort(()=>Math.random()-0.5);
+  el.innerHTML=`<div class="quiz-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span style="font-size:12px;color:var(--text-muted)">Question ${qIdx+1} of ${total}</span>
+      <span style="font-size:12px;color:var(--pink-500);font-weight:500">Score: ${qScore}</span>
+    </div>
+    <div class="quiz-q">"${esc(correct.word)}"</div>
+    <div class="quiz-prompt">What does this word mean?</div>
+    <div class="quiz-choices">
+      ${choices.map(c=>`<button class="quiz-choice" data-word="${esc(c.word)}" onclick="answerQ(this,'${esc(correct.word)}')">${esc(c.def)}</button>`).join('')}
+    </div>
+  </div>`;
+}
+function answerQ(btn,correct){
+  if(qAnswered)return;
+  qAnswered=true;
+  const chosen=btn.getAttribute('data-word');
+  document.querySelectorAll('.quiz-choice').forEach(b=>{
+    b.disabled=true;
+    if(b.getAttribute('data-word')===correct)b.classList.add('correct');
+    else if(b===btn)b.classList.add('wrong');
+  });
+  if(chosen===correct)qScore++;
+  qIdx++;
+  setTimeout(()=>{qAnswered=false;renderQQ();},1200);
+}
+
+// ── DISCOVER ──
+async function fetchSuggest(){
+  const word=document.getElementById('suggest-input').value.trim();
+  if(!word)return;
+  const el=document.getElementById('suggest-results');
+  el.innerHTML=`<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="font-size:12px;color:var(--text-muted);margin-left:6px">Asking AI…</span></div>`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:`For the English word "${word}", provide: 1. Short definition (1 sentence). 2. Part of speech. 3. 5 synonyms. 4. 5 antonyms. Respond ONLY as JSON (no markdown): {"word":"${word}","pos":"...","definition":"...","synonyms":["w1","w2","w3","w4","w5"],"antonyms":["w1","w2","w3","w4","w5"]}`}]})});
+    const data=await resp.json();
+    const parsed=JSON.parse(data.content.map(x=>x.text||'').join('').replace(/```json|```/g,'').trim());
+    renderSuggestR(parsed);
+  }catch(e){el.innerHTML=`<p style="color:#c62828;font-size:13px">Couldn't fetch suggestions. Please try again.</p>`;}
+}
+
+function renderSuggestR(data){
+  const el=document.getElementById('suggest-results');
+  const already=words.find(x=>x.word.toLowerCase()===data.word.toLowerCase());
+  const groupSel=groups.length?`<select id="sug-grp" style="font-size:12px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--white);color:var(--text-main)">
+    <option value="">No group</option>${groups.map(g=>`<option value="${g.id}"${activeGroupId===g.id?' selected':''}>${esc(g.name)}</option>`).join('')}
+  </select>`:'';
+  el.innerHTML=`<div class="suggest-word-info">
+    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:5px;flex-wrap:wrap">
+      <div class="suggest-word-big">${esc(data.word)}</div>
+      <span class="word-pos">${esc(data.pos||'')}</span>
+      <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+        ${groupSel}
+        ${!already?`<button class="btn-ghost" onclick="addSugW('${esc(data.word)}','${esc(data.pos)}','${esc(data.definition)}')">Add to list</button>`:'<span style="font-size:11px;color:var(--text-light)">Already added</span>'}
+      </div>
+    </div>
+    <div class="suggest-word-def">${esc(data.definition)}</div>
+  </div>
+  <div class="suggest-cols">
+    <div><div class="suggest-col-title">Synonyms</div><div>${data.synonyms.map(w=>`<span class="suggest-pill syn" onclick="addSugW('${esc(w)}','${esc(data.pos)}','')">+ ${esc(w)}</span>`).join('')}</div></div>
+    <div><div class="suggest-col-title">Antonyms</div><div>${data.antonyms.map(w=>`<span class="suggest-pill ant" onclick="addSugW('${esc(w)}','${esc(data.pos)}','')">+ ${esc(w)}</span>`).join('')}</div></div>
+  </div>
+  <p style="font-size:11px;color:var(--text-light);margin-top:12px">Click any word to add it. Select a collection first if needed.</p>`;
+}
+
+async function addSugW(word,pos,def){
+  if(words.find(x=>x.word.toLowerCase()===word.toLowerCase())){alert(`"${word}" is already in your list.`);return;}
+  const grpEl=document.getElementById('sug-grp');
+  const gid=grpEl?grpEl.value||null:activeGroupId;
+  if(def){
+    words.unshift({word,def,pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added! 🌸`);return;
+  }
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:`Give a single short definition (1 sentence) for the English word "${word}". Reply with ONLY the definition text.`}]})});
+    const data=await resp.json();
+    const definition=data.content.map(x=>x.text||'').join('').trim();
+    words.unshift({word,def:definition,pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added! 🌸`);
+  }catch(e){
+    words.unshift({word,def:'(definition unavailable)',pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added!`);
+  }
+}
+
+function discoverWord(word){
+  document.getElementById('suggest-input').value=word;
+  showView('suggest'); fetchSuggest();
+}
+
+// ── STATS ──
+function renderStats(){
+  document.getElementById('stat-total').textContent=words.length;
+  document.getElementById('stat-known').textContent=knownSet.size;
+  document.getElementById('stat-streak').textContent=streak;
+  const ll=document.getElementById('learned-list');
+  ll.innerHTML=knownSet.size?[...knownSet].map(w=>`<span class="learned-pill">${esc(w)}</span>`).join(''):'<span style="font-size:12px;color:var(--text-light)">Complete flashcards to see mastered words.</span>';
+}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// INIT
+renderSidebar(); renderBanner(); renderWordList();
+</script>
+</body>
+</html>
