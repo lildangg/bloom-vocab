@@ -1,3 +1,15 @@
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,23 +18,23 @@
 <title>Bloom — English Vocabulary</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
-<!-- ════════════════════════════════════════════════════════
-     FIREBASE CONFIG  ← Paste your own values here
-     See README below for how to get these in 3 minutes.
-     ════════════════════════════════════════════════════════ -->
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+   
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, onValue, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey:            "PASTE_YOUR_apiKey_HERE",
-    authDomain:        "PASTE_YOUR_authDomain_HERE",
-    databaseURL:       "PASTE_YOUR_databaseURL_HERE",
-    projectId:         "PASTE_YOUR_projectId_HERE",
-    storageBucket:     "PASTE_YOUR_storageBucket_HERE",
-    messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
-    appId:             "PASTE_YOUR_appId_HERE"
+ const firebaseConfig = {
+  apiKey: "AIzaSyAbyctEFn8CEutjJ9V2VZpWCqlBF3Y6Nmg",
+  authDomain: "bloom-vocab.firebaseapp.com",
+  projectId: "bloom-vocab",
+  storageBucket: "bloom-vocab.firebasestorage.app",
+  messagingSenderId: "602258789171",
+  appId: "1:602258789171:web:b83b7c0e78d3fdd01ce446",
+  measurementId: "G-KPRMLPZ6CF"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -898,3 +910,5 @@ Realtime Database → Rules and set:
 -->
 </body>
 </html>
+
+
