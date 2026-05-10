@@ -5,11 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bloom — English Vocabulary</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<!-- ════════════════════════════════════════════════════════
+     FIREBASE CONFIG  ← Paste your own values here
+     See README below for how to get these in 3 minutes.
+     ════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, push, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "PASTE_YOUR_apiKey_HERE",
+    authDomain:        "PASTE_YOUR_authDomain_HERE",
+    databaseURL:       "PASTE_YOUR_databaseURL_HERE",
+    projectId:         "PASTE_YOUR_projectId_HERE",
+    storageBucket:     "PASTE_YOUR_storageBucket_HERE",
+    messagingSenderId: "PASTE_YOUR_messagingSenderId_HERE",
+    appId:             "PASTE_YOUR_appId_HERE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // Expose DB helpers globally so the rest of the script can use them
+  window._fb = { db, ref, set, get, onValue, push, remove, update };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fbReady'));
+</script>
+
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 :root {
   --pink-50:#FFF0F5;--pink-100:#FFD6E7;--pink-200:#FFB3CF;--pink-300:#FF85B3;
-  --pink-400:#F2607A;--pink-500:#D94070;--pink-600:#B02158;
+  --pink-400:#F2607A;--pink-500:#D94070;
   --rose-bg:#FDF5F8;--card-bg:#FFFBFD;
   --text-main:#2A1420;--text-muted:#8B5F72;--text-light:#C4A0B0;
   --border:#F0D0DD;--border-strong:#E8B4C4;--white:#FFFFFF;
@@ -19,178 +48,220 @@
 }
 body { font-family:'DM Sans',sans-serif; background:var(--rose-bg); color:var(--text-main); min-height:100vh; display:flex; flex-direction:column; }
 
-/* HEADER */
-header { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; gap:12px; }
-.logo { font-family:'DM Serif Display',serif; font-size:22px; color:var(--pink-500); letter-spacing:-0.5px; display:flex; align-items:center; gap:7px; flex-shrink:0; }
+/* ── SETUP BANNER ── */
+#setup-banner { background:#fff3cd; border-bottom:1px solid #ffc107; padding:10px 24px; font-size:13px; color:#856404; display:flex; align-items:center; gap:10px; }
+#setup-banner a { color:#533f03; font-weight:500; }
+#setup-banner button { margin-left:auto; background:none; border:none; cursor:pointer; font-size:16px; color:#856404; }
+
+/* ── SYNC STATUS ── */
+#sync-status { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-light); padding:4px 8px; border-radius:20px; flex-shrink:0; }
+#sync-status.ok { color:#2e7d32; }
+#sync-status.err { color:#c62828; }
+#sync-status .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+/* ── HEADER ── */
+header { display:flex; align-items:center; justify-content:space-between; padding:14px 26px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; gap:10px; }
+.logo { font-family:'DM Serif Display',serif; font-size:21px; color:var(--pink-500); letter-spacing:-0.5px; display:flex; align-items:center; gap:7px; flex-shrink:0; }
 .logo-dot { width:7px; height:7px; border-radius:50%; background:var(--pink-300); }
 nav { display:flex; gap:2px; }
-nav button { background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-muted); padding:7px 13px; border-radius:var(--radius-md); transition:all 0.15s; }
+nav button { background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-muted); padding:7px 12px; border-radius:var(--radius-md); transition:all 0.15s; }
 nav button:hover { background:var(--pink-50); color:var(--pink-500); }
 nav button.active { background:var(--pink-50); color:var(--pink-500); font-weight:500; border:1px solid var(--border); }
-.streak-badge { display:flex; align-items:center; gap:5px; background:var(--pink-50); border:1px solid var(--border); padding:5px 11px; border-radius:20px; font-size:12px; color:var(--pink-500); font-weight:500; flex-shrink:0; }
+.header-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.streak-badge { display:flex; align-items:center; gap:5px; background:var(--pink-50); border:1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:12px; color:var(--pink-500); font-weight:500; }
 
-/* SHELL */
+/* ── SHELL ── */
 .app-shell { display:flex; flex:1; min-height:0; }
 
-/* SIDEBAR */
-.sidebar { width:224px; flex-shrink:0; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
-.sidebar-header { padding:18px 14px 10px; }
-.sidebar-label { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:10px; }
-.new-group-form { display:flex; gap:6px; }
-.new-group-form input { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--rose-bg); color:var(--text-main); outline:none; min-width:0; }
+/* ── SIDEBAR ── */
+.sidebar { width:220px; flex-shrink:0; background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar-header { padding:16px 13px 8px; }
+.sidebar-label { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:9px; }
+.new-group-form { display:flex; gap:5px; }
+.new-group-form input { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 9px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); background:var(--rose-bg); color:var(--text-main); outline:none; min-width:0; }
 .new-group-form input:focus { border-color:var(--pink-300); }
-.new-group-form button { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-sm); padding:7px 10px; cursor:pointer; font-size:18px; line-height:1; flex-shrink:0; }
+.new-group-form button { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-sm); padding:7px 9px; cursor:pointer; font-size:17px; line-height:1; flex-shrink:0; }
 .new-group-form button:hover { background:var(--pink-500); }
-.sidebar-all { display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin:8px 8px 2px; }
+.sidebar-all { display:flex; align-items:center; gap:7px; padding:8px 10px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin:7px 7px 2px; }
 .sidebar-all:hover { background:var(--pink-50); }
 .sidebar-all.active { background:var(--pink-50); border:1px solid var(--border); }
 .sidebar-all .sa-label { font-size:13px; color:var(--text-main); flex:1; }
 .sidebar-all.active .sa-label { color:var(--pink-500); font-weight:500; }
-.group-list { flex:1; padding:4px 8px 16px; }
-.group-item { display:flex; align-items:center; gap:7px; padding:8px 10px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin-bottom:2px; }
+.group-list { flex:1; padding:3px 7px 14px; }
+.group-item { display:flex; align-items:center; gap:6px; padding:8px 9px; border-radius:var(--radius-md); cursor:pointer; transition:all 0.13s; margin-bottom:2px; }
 .group-item:hover { background:var(--pink-50); }
 .group-item.active { background:var(--pink-50); border:1px solid var(--border); }
 .group-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .group-name { font-size:13px; color:var(--text-main); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .group-item.active .group-name { color:var(--pink-500); font-weight:500; }
 .group-count { font-size:11px; color:var(--text-light); flex-shrink:0; }
-.group-actions { display:flex; gap:2px; opacity:0; transition:opacity 0.15s; }
+.group-actions { display:flex; gap:1px; opacity:0; transition:opacity 0.15s; }
 .group-item:hover .group-actions { opacity:1; }
-.group-act-btn { background:none; border:none; color:var(--text-light); cursor:pointer; font-size:13px; padding:2px 4px; border-radius:4px; }
+.group-act-btn { background:none; border:none; color:var(--text-light); cursor:pointer; font-size:12px; padding:2px 4px; border-radius:4px; }
 .group-act-btn:hover { color:var(--pink-500); }
 .group-act-btn.del:hover { color:#e53e3e; }
 
-/* MAIN */
-main { flex:1; padding:28px 30px; overflow-y:auto; }
+/* ── MAIN ── */
+main { flex:1; padding:26px 28px; overflow-y:auto; }
 .view { display:none; animation:fadeIn 0.18s ease; }
 .view.active { display:block; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none} }
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.section-title { font-family:'DM Serif Display',serif; font-size:25px; color:var(--text-main); margin-bottom:3px; letter-spacing:-0.3px; }
+.section-sub { font-size:13px; color:var(--text-muted); margin-bottom:20px; }
 
-.section-title { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-main); margin-bottom:4px; letter-spacing:-0.3px; }
-.section-sub { font-size:13px; color:var(--text-muted); margin-bottom:22px; }
+/* ── NICKNAME ── */
+.nick-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 14px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.nick-bar label { font-size:12px; color:var(--text-muted); flex-shrink:0; }
+.nick-bar input { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; padding:5px 9px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); outline:none; max-width:160px; }
+.nick-bar input:focus { border-color:var(--pink-300); }
+.nick-bar .nick-tip { font-size:11px; color:var(--text-light); }
 
-/* GROUP BANNER */
-.group-banner { display:flex; align-items:center; gap:10px; margin-bottom:18px; padding:12px 16px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
+/* ── GROUP BANNER ── */
+.group-banner { display:flex; align-items:center; gap:9px; margin-bottom:16px; padding:11px 15px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); }
 .group-banner-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.group-banner-name { font-family:'DM Serif Display',serif; font-size:18px; flex:1; }
+.group-banner-name { font-family:'DM Serif Display',serif; font-size:17px; flex:1; }
 .group-banner-count { font-size:12px; color:var(--text-light); }
-.group-edit-btn { background:none; border:none; font-size:12px; color:var(--text-muted); cursor:pointer; padding:3px 8px; border-radius:var(--radius-sm); }
+.group-edit-btn { background:none; border:none; font-size:12px; color:var(--text-muted); cursor:pointer; padding:3px 7px; border-radius:var(--radius-sm); }
 .group-edit-btn:hover { color:var(--pink-500); }
 
-/* WORD FORM */
-.add-word-form { display:flex; gap:7px; margin-bottom:18px; flex-wrap:wrap; }
-.add-word-form input, .add-word-form select { font-family:'DM Sans',sans-serif; font-size:13px; padding:8px 11px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
+/* ── WORD FORM ── */
+.add-word-form { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.add-word-form input,.add-word-form select { font-family:'DM Sans',sans-serif; font-size:13px; padding:8px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
 .add-word-form input:focus { border-color:var(--pink-300); }
-.add-word-form input.word-input { flex:1; min-width:90px; }
-.add-word-form input.def-input { flex:2; min-width:150px; }
-.btn-primary { background:var(--pink-400); color:white; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 18px; border-radius:var(--radius-md); transition:background 0.15s,transform 0.1s; white-space:nowrap; }
+.add-word-form input.word-input { flex:1; min-width:85px; }
+.add-word-form input.def-input { flex:2; min-width:140px; }
+.btn-primary { background:var(--pink-400); color:white; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 16px; border-radius:var(--radius-md); transition:background 0.15s,transform 0.1s; white-space:nowrap; }
 .btn-primary:hover { background:var(--pink-500); }
 .btn-primary:active { transform:scale(0.98); }
-.btn-ghost { background:none; border:1px solid var(--border-strong); color:var(--text-muted); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 13px; border-radius:var(--radius-md); transition:all 0.15s; }
+.btn-ghost { background:none; border:1px solid var(--border-strong); color:var(--text-muted); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 12px; border-radius:var(--radius-md); transition:all 0.15s; }
 .btn-ghost:hover { border-color:var(--pink-300); color:var(--pink-500); background:var(--pink-50); }
 
-/* WORD CARD */
-.word-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:13px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:11px; transition:box-shadow 0.15s; }
+/* ── WORD CARD ── */
+.word-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:12px 15px; margin-bottom:7px; display:flex; align-items:flex-start; gap:10px; transition:box-shadow 0.15s; }
 .word-card:hover { box-shadow:var(--shadow-card); }
 .word-num { font-size:10px; color:var(--text-light); font-weight:500; min-width:18px; padding-top:3px; text-align:right; }
 .word-body { flex:1; min-width:0; }
-.word-term { font-family:'DM Serif Display',serif; font-size:17px; color:var(--text-main); }
-.word-pos { display:inline-block; font-size:10px; background:var(--pink-50); color:var(--pink-500); border:1px solid var(--border); padding:1px 7px; border-radius:20px; margin-left:5px; font-style:italic; font-family:'DM Serif Display',serif; vertical-align:middle; }
+.word-term { font-family:'DM Serif Display',serif; font-size:16px; color:var(--text-main); }
+.word-pos { display:inline-block; font-size:10px; background:var(--pink-50); color:var(--pink-500); border:1px solid var(--border); padding:1px 6px; border-radius:20px; margin-left:4px; font-style:italic; font-family:'DM Serif Display',serif; vertical-align:middle; }
 .word-def { font-size:12px; color:var(--text-muted); margin-top:3px; line-height:1.5; }
-.word-group-tag { display:inline-block; font-size:10px; padding:1px 8px; border-radius:20px; margin-top:4px; font-weight:500; }
-.word-actions { display:flex; gap:4px; align-items:center; flex-shrink:0; }
-.word-actions button { background:none; border:none; cursor:pointer; font-size:15px; color:var(--text-light); padding:3px 4px; border-radius:var(--radius-sm); transition:color 0.15s; }
+.word-meta { display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap; }
+.word-group-tag { font-size:10px; padding:1px 8px; border-radius:20px; font-weight:500; }
+.word-by { font-size:10px; color:var(--text-light); }
+.word-actions { display:flex; gap:3px; align-items:center; flex-shrink:0; }
+.word-actions button { background:none; border:none; cursor:pointer; font-size:14px; color:var(--text-light); padding:3px 4px; border-radius:var(--radius-sm); transition:color 0.15s; }
 .word-actions button:hover { color:var(--pink-400); }
 .word-actions button.del:hover { color:#e53e3e; }
-.empty-state { text-align:center; padding:48px 0; color:var(--text-light); font-size:13px; }
-.empty-state p:first-child { font-size:28px; margin-bottom:8px; }
 
-/* SCOPE SELECTOR */
-.scope-selector { display:flex; align-items:center; gap:10px; margin-bottom:22px; flex-wrap:wrap; }
+.empty-state { text-align:center; padding:44px 0; color:var(--text-light); font-size:13px; }
+.empty-state p:first-child { font-size:26px; margin-bottom:8px; }
+
+/* ── LOADING OVERLAY ── */
+#loading-overlay { position:fixed; inset:0; background:var(--rose-bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:200; }
+#loading-overlay .logo2 { font-family:'DM Serif Display',serif; font-size:32px; color:var(--pink-500); }
+.spin-dots { display:flex; gap:6px; }
+.spin-dot { width:8px; height:8px; border-radius:50%; background:var(--pink-300); animation:aiPulse 1.2s ease-in-out infinite; }
+.spin-dot:nth-child(2){animation-delay:0.2s}.spin-dot:nth-child(3){animation-delay:0.4s}
+
+/* ── SCOPE SELECTOR ── */
+.scope-selector { display:flex; align-items:center; gap:9px; margin-bottom:20px; flex-wrap:wrap; }
 .scope-selector label { font-size:13px; color:var(--text-muted); }
-.scope-selector select { font-family:'DM Sans',sans-serif; font-size:13px; padding:7px 11px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; cursor:pointer; }
+.scope-selector select { font-family:'DM Sans',sans-serif; font-size:13px; padding:6px 10px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; cursor:pointer; }
 .scope-selector select:focus { border-color:var(--pink-300); }
 
-/* FLASHCARD */
-.fc-controls { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
-.fc-progress-bar { flex:1; height:3px; background:var(--pink-100); border-radius:4px; margin:0 14px; overflow:hidden; }
+/* ── FLASHCARD ── */
+.fc-controls { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.fc-progress-bar { flex:1; height:3px; background:var(--pink-100); border-radius:4px; margin:0 13px; overflow:hidden; }
 .fc-progress-fill { height:100%; background:var(--pink-400); border-radius:4px; transition:width 0.4s ease; }
 .fc-count { font-size:12px; color:var(--text-muted); font-weight:500; white-space:nowrap; }
-.flashcard-stage { perspective:1000px; margin:0 auto 22px; max-width:480px; height:250px; }
-.flashcard-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.55s cubic-bezier(.4,0,.2,1); cursor:pointer; }
+.flashcard-stage { perspective:1000px; margin:0 auto 20px; max-width:460px; height:240px; }
+.flashcard-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.5s cubic-bezier(.4,0,.2,1); cursor:pointer; }
 .flashcard-inner.flipped { transform:rotateY(180deg); }
-.fc-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:var(--radius-xl); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; }
+.fc-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:var(--radius-xl); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:26px; }
 .fc-front { background:var(--white); border:1.5px solid var(--border); box-shadow:var(--shadow-soft); }
 .fc-back { background:linear-gradient(135deg,var(--pink-400) 0%,var(--pink-500) 100%); transform:rotateY(180deg); }
-.fc-word { font-family:'DM Serif Display',serif; font-size:34px; color:var(--text-main); text-align:center; letter-spacing:-0.5px; margin-bottom:6px; }
-.fc-pos-badge { font-family:'DM Serif Display',serif; font-style:italic; font-size:11px; color:var(--text-muted); background:var(--pink-50); border:1px solid var(--border); padding:2px 10px; border-radius:20px; }
-.fc-hint { font-size:11px; color:var(--text-light); margin-top:14px; }
+.fc-word { font-family:'DM Serif Display',serif; font-size:32px; color:var(--text-main); text-align:center; letter-spacing:-0.5px; margin-bottom:6px; }
+.fc-pos-badge { font-family:'DM Serif Display',serif; font-style:italic; font-size:11px; color:var(--text-muted); background:var(--pink-50); border:1px solid var(--border); padding:2px 9px; border-radius:20px; }
+.fc-hint { font-size:11px; color:var(--text-light); margin-top:13px; }
 .fc-def { font-size:15px; color:white; text-align:center; line-height:1.65; }
-.fc-back-word { font-family:'DM Serif Display',serif; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:8px; font-style:italic; }
-.fc-nav { display:flex; align-items:center; justify-content:center; gap:9px; }
-.fc-nav-btn { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
+.fc-back-word { font-family:'DM Serif Display',serif; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:7px; font-style:italic; }
+.fc-nav { display:flex; align-items:center; justify-content:center; gap:8px; }
+.fc-nav-btn { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 16px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
 .fc-nav-btn:hover { border-color:var(--pink-300); color:var(--pink-500); background:var(--pink-50); }
 .fc-nav-btn:disabled { opacity:0.3; cursor:not-allowed; }
-.fc-know-btn { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-md); padding:8px 18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; }
+.fc-know-btn { background:var(--pink-400); color:white; border:none; border-radius:var(--radius-md); padding:8px 16px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.15s; }
 .fc-know-btn:hover { background:var(--pink-500); }
-.fc-empty { text-align:center; padding:52px 0; color:var(--text-light); }
-.fc-empty p:first-child { font-size:34px; margin-bottom:8px; }
+.fc-empty { text-align:center; padding:48px 0; color:var(--text-light); }
+.fc-empty p:first-child { font-size:32px; margin-bottom:8px; }
 
-/* RESULT */
-.result-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:34px; text-align:center; max-width:340px; margin:0 auto; }
-.result-icon { font-size:42px; margin-bottom:8px; }
-.result-score { font-family:'DM Serif Display',serif; font-size:42px; color:var(--pink-500); margin-bottom:4px; }
-.result-label { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+/* ── RESULT ── */
+.result-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:32px; text-align:center; max-width:320px; margin:0 auto; }
+.result-icon { font-size:40px; margin-bottom:8px; }
+.result-score { font-family:'DM Serif Display',serif; font-size:40px; color:var(--pink-500); margin-bottom:3px; }
+.result-label { font-size:13px; color:var(--text-muted); margin-bottom:16px; }
 
-/* QUIZ */
-.quiz-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:30px 34px; max-width:480px; margin:0 auto; }
-.quiz-q { font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:5px; }
-.quiz-prompt { font-size:12px; color:var(--text-muted); margin-bottom:22px; }
-.quiz-choices { display:flex; flex-direction:column; gap:8px; }
-.quiz-choice { background:var(--rose-bg); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:10px 15px; font-size:13px; color:var(--text-main); cursor:pointer; transition:all 0.15s; text-align:left; font-family:'DM Sans',sans-serif; }
+/* ── QUIZ ── */
+.quiz-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-xl); padding:28px 32px; max-width:460px; margin:0 auto; }
+.quiz-q { font-family:'DM Serif Display',serif; font-size:21px; margin-bottom:5px; }
+.quiz-prompt { font-size:12px; color:var(--text-muted); margin-bottom:20px; }
+.quiz-choices { display:flex; flex-direction:column; gap:7px; }
+.quiz-choice { background:var(--rose-bg); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:var(--text-main); cursor:pointer; transition:all 0.15s; text-align:left; font-family:'DM Sans',sans-serif; }
 .quiz-choice:hover:not(:disabled) { border-color:var(--pink-300); background:var(--pink-50); }
 .quiz-choice.correct { border-color:#4caf50; background:#f0fff0; color:#2e7d32; }
 .quiz-choice.wrong { border-color:#f44336; background:#fff0f0; color:#c62828; }
 .quiz-choice:disabled { cursor:default; }
 
-/* DISCOVER */
-.suggest-search { display:flex; gap:8px; margin-bottom:22px; }
-.suggest-search input { flex:1; font-family:'DM Sans',sans-serif; font-size:14px; padding:10px 13px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
+/* ── DISCOVER ── */
+.suggest-search { display:flex; gap:7px; margin-bottom:20px; }
+.suggest-search input { flex:1; font-family:'DM Sans',sans-serif; font-size:14px; padding:10px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-md); background:var(--white); color:var(--text-main); outline:none; transition:border 0.15s; }
 .suggest-search input:focus { border-color:var(--pink-300); }
-.suggest-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.suggest-cols { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
 .suggest-col-title { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:8px; }
-.suggest-pill { display:inline-flex; align-items:center; gap:4px; background:var(--white); border:1px solid var(--border); border-radius:20px; padding:4px 10px 4px 8px; font-size:12px; color:var(--text-main); cursor:pointer; margin:3px; transition:all 0.15s; }
+.suggest-pill { display:inline-flex; align-items:center; gap:4px; background:var(--white); border:1px solid var(--border); border-radius:20px; padding:4px 9px 4px 7px; font-size:12px; color:var(--text-main); cursor:pointer; margin:3px; transition:all 0.15s; }
 .suggest-pill:hover { border-color:var(--pink-300); background:var(--pink-50); color:var(--pink-500); }
 .suggest-pill.syn { border-color:#b0d8b0; background:#f2faf2; }
 .suggest-pill.ant { border-color:#d8b0b0; background:#faf2f2; }
-.suggest-word-info { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:18px; }
-.suggest-word-big { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-main); margin-bottom:4px; }
+.suggest-word-info { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px 18px; margin-bottom:16px; }
+.suggest-word-big { font-family:'DM Serif Display',serif; font-size:25px; color:var(--text-main); margin-bottom:4px; }
 .suggest-word-def { font-size:13px; color:var(--text-muted); line-height:1.5; }
 .ai-loading { display:flex; gap:4px; padding:10px 0; align-items:center; }
 .ai-dot { width:6px; height:6px; border-radius:50%; background:var(--pink-300); animation:aiPulse 1.4s ease-in-out infinite; }
 .ai-dot:nth-child(2){animation-delay:0.2s}.ai-dot:nth-child(3){animation-delay:0.4s}
 @keyframes aiPulse{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
 
-/* STATS */
-.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; margin-bottom:22px; }
-.stat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; text-align:center; }
-.stat-num { font-family:'DM Serif Display',serif; font-size:32px; color:var(--pink-500); }
+/* ── STATS ── */
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:15px; text-align:center; }
+.stat-num { font-family:'DM Serif Display',serif; font-size:30px; color:var(--pink-500); }
 .stat-label { font-size:11px; color:var(--text-muted); margin-top:3px; }
 .learned-list { display:flex; flex-wrap:wrap; gap:6px; }
-.learned-pill { background:var(--pink-50); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; color:var(--pink-500); font-weight:500; }
+.learned-pill { background:var(--pink-50); border:1px solid var(--border); border-radius:20px; padding:4px 11px; font-size:12px; color:var(--pink-500); font-weight:500; }
 
-/* MODAL */
+/* ── MODAL ── */
 .modal-backdrop { position:fixed; inset:0; background:rgba(42,20,32,0.35); z-index:100; display:flex; align-items:center; justify-content:center; }
-.modal { background:var(--white); border-radius:var(--radius-xl); padding:26px 30px; min-width:300px; max-width:400px; width:90%; }
-.modal h3 { font-family:'DM Serif Display',serif; font-size:19px; margin-bottom:14px; }
-.modal input { width:100%; font-family:'DM Sans',sans-serif; font-size:14px; padding:9px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-md); outline:none; margin-bottom:14px; }
+.modal { background:var(--white); border-radius:var(--radius-xl); padding:24px 28px; min-width:290px; max-width:380px; width:90%; }
+.modal h3 { font-family:'DM Serif Display',serif; font-size:18px; margin-bottom:12px; }
+.modal input { width:100%; font-family:'DM Sans',sans-serif; font-size:14px; padding:8px 11px; border:1px solid var(--border-strong); border-radius:var(--radius-md); outline:none; margin-bottom:12px; }
 .modal input:focus { border-color:var(--pink-300); }
-.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.modal-btns { display:flex; gap:7px; justify-content:flex-end; }
 
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--pink-200);border-radius:4px}
 </style>
 </head>
 <body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="logo2">🌸 bloom</div>
+  <div class="spin-dots"><div class="spin-dot"></div><div class="spin-dot"></div><div class="spin-dot"></div></div>
+  <div style="font-size:13px;color:var(--text-muted)">Syncing with the group…</div>
+</div>
+
+<!-- Setup banner (shown until Firebase is configured) -->
+<div id="setup-banner" style="display:none">
+  ⚠️ Firebase not configured yet — words are saved locally only.
+  <a href="#" onclick="document.getElementById('setup-banner').style.display='none'">Dismiss</a>
+  <button onclick="document.getElementById('setup-banner').style.display='none'">✕</button>
+</div>
 
 <header>
   <div class="logo"><span class="logo-dot"></span>bloom</div>
@@ -201,7 +272,10 @@ main { flex:1; padding:28px 30px; overflow-y:auto; }
     <button onclick="showView('suggest')">Discover</button>
     <button onclick="showView('stats')">Progress</button>
   </nav>
-  <div class="streak-badge">🌸 <span id="streak-count">0</span> day streak</div>
+  <div class="header-right">
+    <div id="sync-status"><span class="dot"></span><span id="sync-label">connecting…</span></div>
+    <div class="streak-badge">🌸 <span id="streak-count">0</span> day streak</div>
+  </div>
 </header>
 
 <div class="app-shell">
@@ -210,7 +284,7 @@ main { flex:1; padding:28px 30px; overflow-y:auto; }
       <div class="sidebar-label">Collections</div>
       <div class="new-group-form">
         <input id="new-group-inp" type="text" placeholder="New collection…" maxlength="30" onkeydown="if(event.key==='Enter')createGroup()" />
-        <button onclick="createGroup()" title="Add collection">+</button>
+        <button onclick="createGroup()" title="Add">+</button>
       </div>
     </div>
     <div class="sidebar-all active" id="sidebar-all" onclick="selectGroup(null)">
@@ -222,9 +296,16 @@ main { flex:1; padding:28px 30px; overflow-y:auto; }
   </aside>
 
   <main>
+
     <!-- WORDS -->
     <div class="view active" id="view-list">
       <div id="list-banner"></div>
+      <!-- Nickname bar -->
+      <div class="nick-bar">
+        <label>Your name:</label>
+        <input id="nick-inp" type="text" placeholder="Anonymous" maxlength="20" onchange="saveNick()" />
+        <span class="nick-tip">shown on words you add</span>
+      </div>
       <div class="add-word-form">
         <input class="word-input" id="inp-word" type="text" placeholder="Word" onkeydown="if(event.key==='Enter')addWord()" />
         <input class="def-input" id="inp-def" type="text" placeholder="Definition" onkeydown="if(event.key==='Enter')addWord()" />
@@ -276,16 +357,17 @@ main { flex:1; padding:28px 30px; overflow-y:auto; }
 
     <!-- STATS -->
     <div class="view" id="view-stats">
-      <h1 class="section-title">My Progress</h1>
+      <h1 class="section-title">Progress</h1>
       <p class="section-sub">Track how your vocabulary is growing.</p>
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total words</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-known">0</div><div class="stat-label">Known words</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Day streak 🌸</div></div>
       </div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Words mastered in flashcards:</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Words mastered in flashcards:</p>
       <div class="learned-list" id="learned-list"></div>
     </div>
+
   </main>
 </div>
 
@@ -302,178 +384,307 @@ main { flex:1; padding:28px 30px; overflow-y:auto; }
 </div>
 
 <script>
-const W_KEY='bloom_words_v3', G_KEY='bloom_groups_v3', K_KEY='bloom_known_v3', S_KEY='bloom_streak_v3';
-let words=JSON.parse(localStorage.getItem(W_KEY)||'[]');
-let groups=JSON.parse(localStorage.getItem(G_KEY)||'[]');
-let knownSet=new Set(JSON.parse(localStorage.getItem(K_KEY)||'[]'));
-let activeGroupId=null;
-let renameTargetId=null;
-let currentView='list';
+// ══════════════════════════════════════════════════════════
+//  STATE  (in-memory mirrors of Firebase data)
+// ══════════════════════════════════════════════════════════
+let words  = [];   // [{ fbKey, word, def, pos, groupId, addedBy, added }]
+let groups = [];   // [{ fbKey, id, name, color }]
+let knownSet = new Set(JSON.parse(localStorage.getItem('bloom_known_v4')||'[]'));
+let activeGroupId = null;
+let currentView   = 'list';
+let renameTarget  = null;
+let fbConnected   = false;
 
-const PALETTE=['#F2607A','#D94070','#C47AA0','#E89CC0','#B05070','#E06090','#FF85B3','#D06888','#904060','#E87090'];
-const pickColor=i=>PALETTE[i%PALETTE.length];
+const PALETTE = ['#F2607A','#D94070','#C47AA0','#E89CC0','#B05070','#E06090','#FF85B3','#D06888','#904060','#E87090'];
+const pickColor = i => PALETTE[i % PALETTE.length];
 
-const saveWords=()=>localStorage.setItem(W_KEY,JSON.stringify(words));
-const saveGroups=()=>localStorage.setItem(G_KEY,JSON.stringify(groups));
-const saveKnown=()=>localStorage.setItem(K_KEY,JSON.stringify([...knownSet]));
+// ── Nickname (local, per browser) ──
+let myNick = localStorage.getItem('bloom_nick') || '';
+function saveNick(){
+  myNick = document.getElementById('nick-inp').value.trim();
+  localStorage.setItem('bloom_nick', myNick);
+}
 
+// ── Streak (local) ──
 function getStreak(){
-  const d=JSON.parse(localStorage.getItem(S_KEY)||'{"count":0,"last":""}');
+  const d=JSON.parse(localStorage.getItem('bloom_streak_v4')||'{"count":0,"last":""}');
   const today=new Date().toDateString();
   if(d.last===today)return d.count;
   const count=d.last===new Date(Date.now()-864e5).toDateString()?d.count+1:1;
-  localStorage.setItem(S_KEY,JSON.stringify({count,last:today}));
+  localStorage.setItem('bloom_streak_v4',JSON.stringify({count,last:today}));
   return count;
 }
-const streak=getStreak();
-document.getElementById('streak-count').textContent=streak;
+const streak = getStreak();
 
-// ── GROUPS ──
-function createGroup(){
-  const inp=document.getElementById('new-group-inp');
-  const name=inp.value.trim();
-  if(!name)return;
-  if(groups.find(g=>g.name.toLowerCase()===name.toLowerCase())){alert('Collection already exists.');return;}
-  const g={id:'g_'+Date.now(),name,color:pickColor(groups.length)};
-  groups.push(g); saveGroups(); inp.value='';
-  renderSidebar(); selectGroup(g.id);
+const saveKnown = () => localStorage.setItem('bloom_known_v4', JSON.stringify([...knownSet]));
+
+// ══════════════════════════════════════════════════════════
+//  FIREBASE INIT
+// ══════════════════════════════════════════════════════════
+document.addEventListener('fbReady', initFirebase);
+
+function initFirebase(){
+  const { db, ref, onValue } = window._fb;
+
+  // Check if user pasted real config
+  if(!db._repoInfo || db._repoInfo.host.includes('PASTE')){
+    showSetupBanner();
+    hideLoading();
+    return;
+  }
+
+  // Realtime listener on /groups
+  onValue(ref(db,'groups'), snap => {
+    groups = [];
+    snap.forEach(child => {
+      groups.push({ fbKey:child.key, ...child.val() });
+    });
+    renderSidebar();
+    buildAllScopeOptions();
+  });
+
+  // Realtime listener on /words
+  onValue(ref(db,'words'), snap => {
+    words = [];
+    snap.forEach(child => {
+      words.push({ fbKey:child.key, ...child.val() });
+    });
+    words.sort((a,b)=>b.added-a.added);
+    renderSidebar();
+    renderBanner();
+    renderWordList();
+    buildAllScopeOptions();
+    hideLoading();
+    setSyncOk();
+  }, err => {
+    setSyncErr();
+    hideLoading();
+    showSetupBanner();
+  });
+
+  fbConnected = true;
 }
 
-function deleteGroup(id){
-  if(!confirm('Delete this collection? Words stay in "All Words".'))return;
-  groups=groups.filter(g=>g.id!==id);
-  words.forEach(w=>{if(w.groupId===id)w.groupId=null;});
-  saveGroups(); saveWords();
-  if(activeGroupId===id)selectGroup(null);
-  else{renderSidebar();}
+// If Firebase isn't configured, fall back to localStorage
+function showSetupBanner(){
+  document.getElementById('setup-banner').style.display='flex';
+  loadFromLocal();
+}
+function loadFromLocal(){
+  words  = JSON.parse(localStorage.getItem('bloom_words_local')||'[]');
+  groups = JSON.parse(localStorage.getItem('bloom_groups_local')||'[]');
+  renderSidebar(); renderBanner(); renderWordList(); buildAllScopeOptions();
+}
+function saveLocal(){
+  localStorage.setItem('bloom_words_local', JSON.stringify(words));
+  localStorage.setItem('bloom_groups_local', JSON.stringify(groups));
 }
 
-let renameTarget=null;
-function openRename(id){
-  renameTarget=id;
-  const g=groups.find(g=>g.id===id);
-  document.getElementById('rename-inp').value=g?g.name:'';
-  document.getElementById('rename-modal').style.display='flex';
-  setTimeout(()=>document.getElementById('rename-inp').select(),50);
+function hideLoading(){ document.getElementById('loading-overlay').style.display='none'; }
+function setSyncOk(){ const s=document.getElementById('sync-status'); s.className='ok'; document.getElementById('sync-label').textContent='synced'; }
+function setSyncErr(){ const s=document.getElementById('sync-status'); s.className='err'; document.getElementById('sync-label').textContent='offline'; }
+
+// ══════════════════════════════════════════════════════════
+//  FIREBASE WRITE HELPERS
+// ══════════════════════════════════════════════════════════
+async function fbPushWord(wordObj){
+  if(!fbConnected){ words.unshift(wordObj); saveLocal(); renderSidebar(); renderBanner(); renderWordList(); return; }
+  const { db, ref, push } = window._fb;
+  await push(ref(db,'words'), wordObj);
 }
-function closeRename(){document.getElementById('rename-modal').style.display='none';renameTarget=null;}
-function confirmRename(){
-  const name=document.getElementById('rename-inp').value.trim();
-  if(!name)return;
-  const g=groups.find(g=>g.id===renameTarget);
-  if(g){g.name=name;saveGroups();renderSidebar();if(currentView==='list')renderBanner();}
+
+async function fbRemoveWord(fbKey){
+  if(!fbConnected){ words=words.filter(w=>w.fbKey!==fbKey); saveLocal(); renderSidebar(); renderBanner(); renderWordList(); return; }
+  const { db, ref, remove } = window._fb;
+  await remove(ref(db,`words/${fbKey}`));
+}
+
+async function fbMoveWord(fbKey, toGroupId){
+  if(!fbConnected){ const w=words.find(w=>w.fbKey===fbKey); if(w)w.groupId=toGroupId; saveLocal(); renderSidebar(); renderWordList(); return; }
+  const { db, ref, update } = window._fb;
+  await update(ref(db,`words/${fbKey}`), { groupId: toGroupId });
+}
+
+async function fbPushGroup(groupObj){
+  if(!fbConnected){ groups.push(groupObj); saveLocal(); renderSidebar(); return; }
+  const { db, ref, push } = window._fb;
+  const result = await push(ref(db,'groups'), groupObj);
+  return result.key;
+}
+
+async function fbRemoveGroup(fbKey){
+  if(!fbConnected){ groups=groups.filter(g=>g.fbKey!==fbKey); saveLocal(); return; }
+  const { db, ref, remove } = window._fb;
+  await remove(ref(db,`groups/${fbKey}`));
+}
+
+async function fbRenameGroup(fbKey, name){
+  if(!fbConnected){ const g=groups.find(g=>g.fbKey===fbKey); if(g)g.name=name; saveLocal(); return; }
+  const { db, ref, update } = window._fb;
+  await update(ref(db,`groups/${fbKey}`), { name });
+}
+
+// ══════════════════════════════════════════════════════════
+//  GROUPS
+// ══════════════════════════════════════════════════════════
+async function createGroup(){
+  const inp = document.getElementById('new-group-inp');
+  const name = inp.value.trim();
+  if(!name) return;
+  if(groups.find(g=>g.name.toLowerCase()===name.toLowerCase())){ alert('Collection already exists.'); return; }
+  inp.value = '';
+  const obj = { name, color: pickColor(groups.length), created: Date.now() };
+  const key = await fbPushGroup(obj);
+  // select the new group after Firebase fires onValue (or immediately in local mode)
+  if(!fbConnected){
+    const g = groups[groups.length-1];
+    if(g) selectGroup(g.fbKey);
+  }
+}
+
+async function deleteGroup(fbKey){
+  if(!confirm('Delete this collection? Words stay in "All Words".')) return;
+  // move words out of group
+  const affected = words.filter(w=>w.groupId===fbKey);
+  for(const w of affected) await fbMoveWord(w.fbKey, null);
+  await fbRemoveGroup(fbKey);
+  if(activeGroupId===fbKey) selectGroup(null);
+}
+
+function openRename(fbKey){
+  renameTarget = fbKey;
+  const g = groups.find(g=>g.fbKey===fbKey);
+  document.getElementById('rename-inp').value = g ? g.name : '';
+  document.getElementById('rename-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('rename-inp').select(), 50);
+}
+function closeRename(){ document.getElementById('rename-modal').style.display='none'; renameTarget=null; }
+async function confirmRename(){
+  const name = document.getElementById('rename-inp').value.trim();
+  if(!name) return;
+  await fbRenameGroup(renameTarget, name);
   closeRename();
 }
 
 function selectGroup(id){
-  activeGroupId=id;
+  activeGroupId = id;
   document.querySelectorAll('.sidebar-all,.group-item').forEach(el=>el.classList.remove('active'));
-  if(id===null)document.getElementById('sidebar-all').classList.add('active');
-  else{const el=document.querySelector(`.group-item[data-id="${id}"]`);if(el)el.classList.add('active');}
+  if(id===null) document.getElementById('sidebar-all').classList.add('active');
+  else { const el=document.querySelector(`.group-item[data-fbkey="${id}"]`); if(el)el.classList.add('active'); }
   renderBanner(); renderWordList();
 }
 
 function renderSidebar(){
-  document.getElementById('all-count').textContent=words.length;
-  document.getElementById('group-list').innerHTML=groups.map(g=>{
-    const cnt=words.filter(w=>w.groupId===g.id).length;
-    const active=activeGroupId===g.id?' active':'';
-    return `<div class="group-item${active}" data-id="${g.id}" onclick="selectGroup('${g.id}')">
+  document.getElementById('all-count').textContent = words.length;
+  document.getElementById('group-list').innerHTML = groups.map(g=>{
+    const cnt = words.filter(w=>w.groupId===g.fbKey).length;
+    const active = activeGroupId===g.fbKey ? ' active':'';
+    return `<div class="group-item${active}" data-fbkey="${g.fbKey}" onclick="selectGroup('${g.fbKey}')">
       <span class="group-dot" style="background:${g.color}"></span>
       <span class="group-name">${esc(g.name)}</span>
       <span class="group-count">${cnt}</span>
       <span class="group-actions">
-        <button class="group-act-btn" onclick="event.stopPropagation();openRename('${g.id}')" title="Rename">✎</button>
-        <button class="group-act-btn del" onclick="event.stopPropagation();deleteGroup('${g.id}')" title="Delete">✕</button>
+        <button class="group-act-btn" onclick="event.stopPropagation();openRename('${g.fbKey}')" title="Rename">✎</button>
+        <button class="group-act-btn del" onclick="event.stopPropagation();deleteGroup('${g.fbKey}')" title="Delete">✕</button>
       </span>
     </div>`;
   }).join('');
 }
 
-// ── WORD LIST ──
+// ══════════════════════════════════════════════════════════
+//  WORDS
+// ══════════════════════════════════════════════════════════
 function visibleWords(){
   return activeGroupId===null ? words : words.filter(w=>w.groupId===activeGroupId);
 }
 
 function renderBanner(){
-  const el=document.getElementById('list-banner');
+  const el = document.getElementById('list-banner');
   if(activeGroupId===null){
-    el.innerHTML=`<div style="margin-bottom:16px"><h1 class="section-title">All Words</h1><p class="section-sub">Your entire vocabulary — ${words.length} word${words.length!==1?'s':''}.</p></div>`;
+    el.innerHTML=`<div style="margin-bottom:14px"><h1 class="section-title">All Words</h1><p class="section-sub">Shared vocabulary — ${words.length} word${words.length!==1?'s':''}. Everyone contributes!</p></div>`;
   } else {
-    const g=groups.find(g=>g.id===activeGroupId);
-    if(!g){el.innerHTML='';return;}
-    const cnt=words.filter(w=>w.groupId===g.id).length;
+    const g = groups.find(g=>g.fbKey===activeGroupId);
+    if(!g){ el.innerHTML=''; return; }
+    const cnt = words.filter(w=>w.groupId===g.fbKey).length;
     el.innerHTML=`<div class="group-banner">
       <span class="group-banner-dot" style="background:${g.color}"></span>
       <span class="group-banner-name">${esc(g.name)}</span>
       <span class="group-banner-count">${cnt} word${cnt!==1?'s':''}</span>
-      <button class="group-edit-btn" onclick="openRename('${g.id}')">rename</button>
+      <button class="group-edit-btn" onclick="openRename('${g.fbKey}')">rename</button>
     </div>`;
   }
 }
 
-function addWord(){
+async function addWord(){
   const w=document.getElementById('inp-word').value.trim();
   const d=document.getElementById('inp-def').value.trim();
   const p=document.getElementById('inp-pos').value;
-  if(!w||!d){alert('Please enter a word and definition.');return;}
-  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase())){alert('Already in your list!');return;}
-  words.unshift({word:w,def:d,pos:p,groupId:activeGroupId,added:Date.now()});
-  saveWords(); renderSidebar(); renderBanner(); renderWordList();
+  if(!w||!d){ alert('Please enter a word and definition.'); return; }
+  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase())){ alert('Already in the list!'); return; }
+  const nick = document.getElementById('nick-inp').value.trim() || 'Anonymous';
+  await fbPushWord({ word:w, def:d, pos:p, groupId:activeGroupId, addedBy:nick, added:Date.now() });
   document.getElementById('inp-word').value='';
   document.getElementById('inp-def').value='';
   document.getElementById('inp-pos').value='';
   document.getElementById('inp-word').focus();
 }
 
-function deleteWord(i){words.splice(i,1);saveWords();renderSidebar();renderBanner();renderWordList();}
-
-function moveWord(globalIdx,toGroupId){
-  words[globalIdx].groupId=(toGroupId===''||toGroupId==='null')?null:toGroupId;
-  saveWords();renderSidebar();renderWordList();
+async function deleteWord(fbKey){
+  if(!confirm('Remove this word for everyone?')) return;
+  await fbRemoveWord(fbKey);
 }
 
 function renderWordList(){
-  const c=document.getElementById('word-list-container');
-  const vis=visibleWords();
+  const c = document.getElementById('word-list-container');
+  const vis = visibleWords();
   if(!vis.length){
-    c.innerHTML=`<div class="empty-state"><p>🌸</p><p>${activeGroupId?'No words in this collection yet.':'No words yet. Add your first word above!'}</p></div>`;
+    c.innerHTML=`<div class="empty-state"><p>🌸</p><p>${activeGroupId?'No words here yet — add the first one!':'No words yet. Be the first to add one!'}</p></div>`;
     return;
   }
-  const groupOpts=`<option value="">move to…</option><option value="null">— No group —</option>`+groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  const groupOpts=`<option value="">move to…</option><option value="__none">— No group —</option>`+
+    groups.map(g=>`<option value="${g.fbKey}">${esc(g.name)}</option>`).join('');
   c.innerHTML=vis.map((w,vi)=>{
-    const gi=words.indexOf(w);
-    const g=w.groupId?groups.find(gr=>gr.id===w.groupId):null;
+    const g=w.groupId?groups.find(gr=>gr.fbKey===w.groupId):null;
     return `<div class="word-card">
       <span class="word-num">${vis.length-vi}</span>
       <div class="word-body">
         <div class="word-term">${esc(w.word)}${w.pos?`<span class="word-pos">${esc(w.pos)}</span>`:''}</div>
         <div class="word-def">${esc(w.def)}</div>
-        ${activeGroupId===null&&g?`<span class="word-group-tag" style="background:${g.color}22;color:${g.color};border:1px solid ${g.color}44">${esc(g.name)}</span>`:''}
+        <div class="word-meta">
+          ${activeGroupId===null&&g?`<span class="word-group-tag" style="background:${g.color}22;color:${g.color};border:1px solid ${g.color}44">${esc(g.name)}</span>`:''}
+          ${w.addedBy?`<span class="word-by">by ${esc(w.addedBy)}</span>`:''}
+        </div>
       </div>
       <div class="word-actions">
-        ${groups.length?`<select style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:8px;background:var(--rose-bg);color:var(--text-muted);cursor:pointer;max-width:110px" onchange="moveWord(${gi},this.value);this.value=''">${groupOpts}</select>`:''}
+        ${groups.length?`<select style="font-size:11px;padding:3px 5px;border:1px solid var(--border);border-radius:7px;background:var(--rose-bg);color:var(--text-muted);cursor:pointer;max-width:100px" onchange="fbMoveWord('${w.fbKey}',this.value==='__none'?null:this.value);this.value=''">${groupOpts}</select>`:''}
         <button title="Discover synonyms" onclick="discoverWord('${esc(w.word)}')">✦</button>
-        <button class="del" title="Delete" onclick="deleteWord(${gi})">✕</button>
+        <button class="del" title="Delete for everyone" onclick="deleteWord('${w.fbKey}')">✕</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── SCOPE SELECT ──
+// ══════════════════════════════════════════════════════════
+//  SCOPE SELECTORS
+// ══════════════════════════════════════════════════════════
+function buildAllScopeOptions(){
+  ['fc-scope','quiz-scope'].forEach(id=>buildScopeOptions(id));
+}
 function buildScopeOptions(selId){
   const sel=document.getElementById(selId);
   const prev=sel.value;
   sel.innerHTML=`<option value="all">All Words (${words.length})</option>`+
-    groups.map(g=>{const cnt=words.filter(w=>w.groupId===g.id).length;return`<option value="${g.id}">${esc(g.name)} (${cnt})</option>`;}).join('');
-  if(prev&&(prev==='all'||groups.find(g=>g.id===prev)))sel.value=prev;
+    groups.map(g=>{const cnt=words.filter(w=>w.groupId===g.fbKey).length;return`<option value="${g.fbKey}">${esc(g.name)} (${cnt})</option>`;}).join('');
+  if(prev&&(prev==='all'||groups.find(g=>g.fbKey===prev)))sel.value=prev;
 }
 function getScopedWords(selId){
   const v=document.getElementById(selId).value;
   return(!v||v==='all')?words:words.filter(w=>w.groupId===v);
 }
 
-// ── NAVIGATION ──
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
@@ -487,7 +698,9 @@ function showView(name){
   if(name==='list'){renderBanner();renderWordList();}
 }
 
-// ── FLASHCARD ──
+// ══════════════════════════════════════════════════════════
+//  FLASHCARDS
+// ══════════════════════════════════════════════════════════
 let fcIdx=0,fcFlipped=false,fcKnown=0,fcW=[];
 function renderFlashcard(){
   const el=document.getElementById('fc-area');
@@ -499,8 +712,7 @@ function renderFCC(){
   const el=document.getElementById('fc-area');
   if(fcIdx>=fcW.length){
     const pct=Math.round((fcKnown/fcW.length)*100);
-    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${pct}%</div><div class="result-label">You knew ${fcKnown} of ${fcW.length} words</div><button class="btn-primary" onclick="renderFlashcard()">Restart</button></div>`;
-    return;
+    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${pct}%</div><div class="result-label">You knew ${fcKnown} of ${fcW.length} words</div><button class="btn-primary" onclick="renderFlashcard()">Restart</button></div>`;return;
   }
   const w=fcW[fcIdx];
   const prog=(fcIdx/fcW.length)*100;
@@ -532,7 +744,9 @@ function fcNav(d){fcIdx=Math.max(0,fcIdx+d);fcFlipped=false;renderFCC();}
 function fcSkip(){fcIdx++;fcFlipped=false;renderFCC();}
 function fcKnow(){knownSet.add(fcW[fcIdx].word.toLowerCase());saveKnown();fcKnown++;fcIdx++;fcFlipped=false;renderFCC();}
 
-// ── QUIZ ──
+// ══════════════════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════════════════
 let qIdx=0,qScore=0,qAnswered=false,qW=[];
 function renderQuiz(){
   const el=document.getElementById('quiz-area');
@@ -545,15 +759,13 @@ function renderQQ(){
   const total=Math.min(qW.length,10);
   if(qIdx>=total){
     const pct=Math.round((qScore/total)*100);
-    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${qScore}/${total}</div><div class="result-label">${pct>=80?'Excellent!':pct>=50?'Good job!':'Keep practicing!'}</div><button class="btn-primary" onclick="renderQuiz()">Try Again</button></div>`;
-    return;
+    el.innerHTML=`<div class="result-box"><div class="result-icon">${pct>=80?'🎉':pct>=50?'💪':'📚'}</div><div class="result-score">${qScore}/${total}</div><div class="result-label">${pct>=80?'Excellent!':pct>=50?'Good job!':'Keep practicing!'}</div><button class="btn-primary" onclick="renderQuiz()">Try Again</button></div>`;return;
   }
   const shuffled=[...qW].sort(()=>Math.random()-0.5);
   const correct=shuffled[0];
-  const wrong=shuffled.slice(1,Math.min(4,shuffled.length));
-  const choices=[...wrong,correct].sort(()=>Math.random()-0.5);
+  const choices=[...shuffled.slice(1,Math.min(4,shuffled.length)),correct].sort(()=>Math.random()-0.5);
   el.innerHTML=`<div class="quiz-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <span style="font-size:12px;color:var(--text-muted)">Question ${qIdx+1} of ${total}</span>
       <span style="font-size:12px;color:var(--pink-500);font-weight:500">Score: ${qScore}</span>
     </div>
@@ -578,7 +790,9 @@ function answerQ(btn,correct){
   setTimeout(()=>{qAnswered=false;renderQQ();},1200);
 }
 
-// ── DISCOVER ──
+// ══════════════════════════════════════════════════════════
+//  DISCOVER
+// ══════════════════════════════════════════════════════════
 async function fetchSuggest(){
   const word=document.getElementById('suggest-input').value.trim();
   if(!word)return;
@@ -597,14 +811,14 @@ async function fetchSuggest(){
 function renderSuggestR(data){
   const el=document.getElementById('suggest-results');
   const already=words.find(x=>x.word.toLowerCase()===data.word.toLowerCase());
-  const groupSel=groups.length?`<select id="sug-grp" style="font-size:12px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--white);color:var(--text-main)">
-    <option value="">No group</option>${groups.map(g=>`<option value="${g.id}"${activeGroupId===g.id?' selected':''}>${esc(g.name)}</option>`).join('')}
+  const groupSel=groups.length?`<select id="sug-grp" style="font-size:12px;padding:5px 7px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--white);color:var(--text-main)">
+    <option value="">No group</option>${groups.map(g=>`<option value="${g.fbKey}"${activeGroupId===g.fbKey?' selected':''}>${esc(g.name)}</option>`).join('')}
   </select>`:'';
   el.innerHTML=`<div class="suggest-word-info">
-    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:5px;flex-wrap:wrap">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;flex-wrap:wrap">
       <div class="suggest-word-big">${esc(data.word)}</div>
       <span class="word-pos">${esc(data.pos||'')}</span>
-      <div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         ${groupSel}
         ${!already?`<button class="btn-ghost" onclick="addSugW('${esc(data.word)}','${esc(data.pos)}','${esc(data.definition)}')">Add to list</button>`:'<span style="font-size:11px;color:var(--text-light)">Already added</span>'}
       </div>
@@ -615,24 +829,25 @@ function renderSuggestR(data){
     <div><div class="suggest-col-title">Synonyms</div><div>${data.synonyms.map(w=>`<span class="suggest-pill syn" onclick="addSugW('${esc(w)}','${esc(data.pos)}','')">+ ${esc(w)}</span>`).join('')}</div></div>
     <div><div class="suggest-col-title">Antonyms</div><div>${data.antonyms.map(w=>`<span class="suggest-pill ant" onclick="addSugW('${esc(w)}','${esc(data.pos)}','')">+ ${esc(w)}</span>`).join('')}</div></div>
   </div>
-  <p style="font-size:11px;color:var(--text-light);margin-top:12px">Click any word to add it. Select a collection first if needed.</p>`;
+  <p style="font-size:11px;color:var(--text-light);margin-top:10px">Click any word to add it to the shared list.</p>`;
 }
 
 async function addSugW(word,pos,def){
-  if(words.find(x=>x.word.toLowerCase()===word.toLowerCase())){alert(`"${word}" is already in your list.`);return;}
+  if(words.find(x=>x.word.toLowerCase()===word.toLowerCase())){alert(`"${word}" is already in the list.`);return;}
   const grpEl=document.getElementById('sug-grp');
   const gid=grpEl?grpEl.value||null:activeGroupId;
-  if(def){
-    words.unshift({word,def,pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added! 🌸`);return;
-  }
+  const nick=document.getElementById('nick-inp').value.trim()||'Anonymous';
+  if(def){await fbPushWord({word,def,pos,groupId:gid,addedBy:nick,added:Date.now()});alert(`"${word}" added! 🌸`);return;}
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:`Give a single short definition (1 sentence) for the English word "${word}". Reply with ONLY the definition text.`}]})});
     const data=await resp.json();
     const definition=data.content.map(x=>x.text||'').join('').trim();
-    words.unshift({word,def:definition,pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added! 🌸`);
+    await fbPushWord({word,def:definition,pos,groupId:gid,addedBy:nick,added:Date.now()});
+    alert(`"${word}" added! 🌸`);
   }catch(e){
-    words.unshift({word,def:'(definition unavailable)',pos,groupId:gid,added:Date.now()});saveWords();renderSidebar();alert(`"${word}" added!`);
+    await fbPushWord({word,def:'(definition unavailable)',pos,groupId:gid,addedBy:nick,added:Date.now()});
+    alert(`"${word}" added!`);
   }
 }
 
@@ -641,19 +856,45 @@ function discoverWord(word){
   showView('suggest'); fetchSuggest();
 }
 
-// ── STATS ──
+// ══════════════════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════════════════
 function renderStats(){
   document.getElementById('stat-total').textContent=words.length;
   document.getElementById('stat-known').textContent=knownSet.size;
   document.getElementById('stat-streak').textContent=streak;
+  document.getElementById('streak-count').textContent=streak;
   const ll=document.getElementById('learned-list');
   ll.innerHTML=knownSet.size?[...knownSet].map(w=>`<span class="learned-pill">${esc(w)}</span>`).join(''):'<span style="font-size:12px;color:var(--text-light)">Complete flashcards to see mastered words.</span>';
 }
 
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-// INIT
-renderSidebar(); renderBanner(); renderWordList();
+// ── INIT ──
+document.getElementById('streak-count').textContent=streak;
+document.getElementById('nick-inp').value=myNick;
+// If Firebase doesn't load within 4s, fall back to local
+setTimeout(()=>{ if(!fbConnected){ showSetupBanner(); hideLoading(); } }, 4000);
 </script>
+
+<!--
+════════════════════════════════════════════════════════════════
+  HOW TO SET UP FIREBASE (takes ~3 minutes, free forever)
+════════════════════════════════════════════════════════════════
+
+1. Go to  https://console.firebase.google.com
+2. Click "Add project" → give it a name → Continue → Create project
+3. In your project dashboard, click the </> (Web) icon → register app → skip hosting
+4. Copy the firebaseConfig object values into the <script type="module"> block at the top of this file
+5. In the left sidebar: Build → Realtime Database → Create database
+   → choose a region → start in TEST MODE (allows all reads/writes, fine for group study)
+6. Copy the databaseURL (looks like https://your-app-default-rtdb.firebaseio.com) into the config
+7. Deploy to Vercel — everyone who opens the URL shares the same word list in real time ✓
+
+NOTE: "Test mode" rules expire after 30 days. To make it permanent, go to
+Realtime Database → Rules and set:
+  { "rules": { ".read": true, ".write": true } }
+════════════════════════════════════════════════════════════════
+-->
 </body>
 </html>
