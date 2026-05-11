@@ -6,14 +6,8 @@
 <title>Bloom — English Vocabulary</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
-<!-- ╔══════════════════════════════════════════════════╗
-     ║  FIREBASE CONFIG — paste your values below      ║
-     ╚══════════════════════════════════════════════════╝
-  Your config looks correct. The most likely reason it
-  didn't work: your Realtime Database rules are locked.
-  Fix: Firebase Console → Realtime Database → Rules → set:
-  { "rules": { ".read": true, ".write": true } } → Publish
--->
+
+
 <script type="module">
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, onValue, push, remove, update }
@@ -22,7 +16,7 @@
   const firebaseConfig = {
     apiKey:            "AIzaSyAbyctEFn8CEutjJ9V2VZpWCqlBF3Y6Nmg",
     authDomain:        "bloom-vocab.firebaseapp.com",
-    databaseURL:       "https://bloom-vocab-default-rtdb.firebaseio.com",
+    databaseURL:       "https://bloom-vocab-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId:         "bloom-vocab",
     storageBucket:     "bloom-vocab.firebasestorage.app",
     messagingSenderId: "602258789171",
