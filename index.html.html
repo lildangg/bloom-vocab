@@ -568,18 +568,29 @@ function renderBanner(){
   }
 }
 
+let _addingWord=false;
 async function addWord(){
+  if(_addingWord)return;
   const w=document.getElementById('inp-word').value.trim();
   const d=document.getElementById('inp-def').value.trim();
   const p=document.getElementById('inp-pos').value;
   if(!w||!d){alert('Enter a word and definition.');return;}
-  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase()&&( x.groupId||'none')===( activeGroupId||'none'))){alert('Already in this collection!');return;}
+  const targetGroupId=activeGroupId||'none';
+  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase()&&(x.groupId||'none')===targetGroupId)){alert('Already in this collection!');return;}
+  _addingWord=true;
+  const btn=document.querySelector('.add-word-form .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Adding…';}
   const nick=document.getElementById('nick-inp').value.trim()||'Anonymous';
-  await fbPushWord({word:w,def:d,pos:p,groupId:activeGroupId||"none",addedBy:nick,added:Date.now()});
-  document.getElementById('inp-word').value='';
-  document.getElementById('inp-def').value='';
-  document.getElementById('inp-pos').value='';
-  document.getElementById('inp-word').focus();
+  try{
+    await fbPushWord({word:w,def:d,pos:p,groupId:targetGroupId,addedBy:nick,added:Date.now()});
+    document.getElementById('inp-word').value='';
+    document.getElementById('inp-def').value='';
+    document.getElementById('inp-pos').selectedIndex=0;
+  }finally{
+    _addingWord=false;
+    if(btn){btn.disabled=false;btn.textContent='+ Add';}
+    document.getElementById('inp-word').focus();
+  }
 }
 
 async function deleteWord(key){
