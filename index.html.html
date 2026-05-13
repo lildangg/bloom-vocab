@@ -6,8 +6,14 @@
 <title>Bloom — English Vocabulary</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
-
-
+<!-- ╔══════════════════════════════════════════════════╗
+     ║  FIREBASE CONFIG — paste your values below      ║
+     ╚══════════════════════════════════════════════════╝
+  Your config looks correct. The most likely reason it
+  didn't work: your Realtime Database rules are locked.
+  Fix: Firebase Console → Realtime Database → Rules → set:
+  { "rules": { ".read": true, ".write": true } } → Publish
+-->
 <script type="module">
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, onValue, push, remove, update }
@@ -472,7 +478,7 @@ async function fbRemoveWord(key){
 }
 async function fbMoveWord(key,toGroupId){
   if(!fbConnected){const w=words.find(w=>w.fbKey===key);if(w)w.groupId=toGroupId;saveLocal();renderSidebar();renderWordList();return;}
-  const{db,ref,update}=window._fb; await update(ref(db,`words/${key}`),{groupId:toGroupId});
+  const{db,ref,update}=window._fb; await update(ref(db,`words/${key}`),{groupId:toGroupId||"none"});
 }
 async function fbPushGroup(obj){
   if(!fbConnected){groups.push(obj);saveLocal();renderSidebar();return null;}
@@ -500,7 +506,7 @@ async function createGroup(){
 }
 async function deleteGroup(key){
   if(!confirm('Delete collection? Words stay in All Words.'))return;
-  for(const w of words.filter(w=>w.groupId===key)) await fbMoveWord(w.fbKey,null);
+  for(const w of words.filter(w=>(w.groupId||'none')===key)) await fbMoveWord(w.fbKey,null);
   await fbRemoveGroup(key);
   if(activeGroupId===key)selectGroup(null);
 }
@@ -526,7 +532,7 @@ function selectGroup(id){
 function renderSidebar(){
   document.getElementById('all-count').textContent=words.length;
   document.getElementById('group-list').innerHTML=groups.map(g=>{
-    const cnt=words.filter(w=>w.groupId===g.fbKey).length;
+    const cnt=words.filter(w=>(w.groupId||'none')===g.fbKey).length;
     const act=activeGroupId===g.fbKey?' active':'';
     return`<div class="group-item${act}" data-fbkey="${g.fbKey}" onclick="selectGroup('${g.fbKey}');closeSidebar()">
       <span class="group-dot" style="background:${g.color}"></span>
@@ -543,7 +549,7 @@ function renderSidebar(){
 // ══════════════════════════════════════════════════════
 //  WORDS
 // ══════════════════════════════════════════════════════
-const visibleWords=()=>activeGroupId===null?words:words.filter(w=>w.groupId===activeGroupId);
+const visibleWords=()=>activeGroupId===null?words:words.filter(w=>(w.groupId||'none')===activeGroupId);
 
 function renderBanner(){
   const el=document.getElementById('list-banner');
@@ -552,7 +558,7 @@ function renderBanner(){
   } else {
     const g=groups.find(g=>g.fbKey===activeGroupId);
     if(!g){el.innerHTML='';return;}
-    const cnt=words.filter(w=>w.groupId===g.fbKey).length;
+    const cnt=words.filter(w=>(w.groupId||'none')===g.fbKey).length;
     el.innerHTML=`<div class="group-banner">
       <span class="group-banner-dot" style="background:${g.color}"></span>
       <span class="group-banner-name">${esc(g.name)}</span>
@@ -567,9 +573,9 @@ async function addWord(){
   const d=document.getElementById('inp-def').value.trim();
   const p=document.getElementById('inp-pos').value;
   if(!w||!d){alert('Enter a word and definition.');return;}
-  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase())){alert('Already in the list!');return;}
+  if(words.find(x=>x.word.toLowerCase()===w.toLowerCase()&&( x.groupId||'none')===( activeGroupId||'none'))){alert('Already in this collection!');return;}
   const nick=document.getElementById('nick-inp').value.trim()||'Anonymous';
-  await fbPushWord({word:w,def:d,pos:p,groupId:activeGroupId,addedBy:nick,added:Date.now()});
+  await fbPushWord({word:w,def:d,pos:p,groupId:activeGroupId||"none",addedBy:nick,added:Date.now()});
   document.getElementById('inp-word').value='';
   document.getElementById('inp-def').value='';
   document.getElementById('inp-pos').value='';
@@ -615,10 +621,10 @@ const buildAllScopeOptions=()=>['fc-scope','quiz-scope'].forEach(buildScopeOptio
 function buildScopeOptions(selId){
   const sel=document.getElementById(selId),prev=sel.value;
   sel.innerHTML=`<option value="all">All Words (${words.length})</option>`+
-    groups.map(g=>{const cnt=words.filter(w=>w.groupId===g.fbKey).length;return`<option value="${g.fbKey}">${esc(g.name)} (${cnt})</option>`;}).join('');
+    groups.map(g=>{const cnt=words.filter(w=>(w.groupId||'none')===g.fbKey).length;return`<option value="${g.fbKey}">${esc(g.name)} (${cnt})</option>`;}).join('');
   if(prev&&(prev==='all'||groups.find(g=>g.fbKey===prev)))sel.value=prev;
 }
-const getScopedWords=selId=>{const v=document.getElementById(selId).value;return(!v||v==='all')?words:words.filter(w=>w.groupId===v);};
+const getScopedWords=selId=>{const v=document.getElementById(selId).value;return(!v||v==='all')?words:words.filter(w=>(w.groupId||'none')===v);};
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -783,16 +789,16 @@ async function addSugW(word,pos,def){
   const grpEl=document.getElementById('sug-grp');
   const gid=grpEl?grpEl.value||null:activeGroupId;
   const nick=document.getElementById('nick-inp').value.trim()||'Anonymous';
-  if(def){await fbPushWord({word,def,pos,groupId:gid,addedBy:nick,added:Date.now()});alert(`"${word}" added! 🌸`);return;}
+  if(def){await fbPushWord({word,def,pos,groupId:gid||"none",addedBy:nick,added:Date.now()});alert(`"${word}" added! 🌸`);return;}
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:`Short 1-sentence definition for the English word "${word}". Reply with ONLY the definition.`}]})});
     const data=await resp.json();
     const definition=data.content.map(x=>x.text||'').join('').trim();
-    await fbPushWord({word,def:definition,pos,groupId:gid,addedBy:nick,added:Date.now()});
+    await fbPushWord({word,def:definition,pos,groupId:gid||"none",addedBy:nick,added:Date.now()});
     alert(`"${word}" added! 🌸`);
   }catch(e){
-    await fbPushWord({word,def:'(definition unavailable)',pos,groupId:gid,addedBy:nick,added:Date.now()});
+    await fbPushWord({word,def:'(definition unavailable)',pos,groupId:gid||"none",addedBy:nick,added:Date.now()});
     alert(`"${word}" added!`);
   }
 }
