@@ -451,7 +451,7 @@ function initFirebase(){
     words.sort((a,b)=>b.added-a.added);
     renderSidebar(); renderBanner(); renderWordList(); buildAllScopeOptions();
     hideLoading(); setSyncOk();
-  },()=>{ setSyncErr(); hideLoading(); loadFromLocal(); });
+  },()=>{ fbConnected=false; setSyncErr(); hideLoading(); loadFromLocal(); });
 }
 
 function loadFromLocal(){
@@ -470,27 +470,39 @@ function setSyncErr(){const s=document.getElementById('sync-status');s.className
 // ── Firebase write helpers ──
 async function fbPushWord(obj){
   if(!fbConnected){words.unshift(obj);saveLocal();renderSidebar();renderBanner();renderWordList();return;}
-  const{db,ref,push}=window._fb; await push(ref(db,'words'),obj);
+  try{
+    const{db,ref,push}=window._fb;
+    await push(ref(db,'words'),obj);
+  }catch(e){
+    console.warn('Firebase write failed, falling back to local:',e);
+    fbConnected=false; setSyncErr();
+    words.unshift(obj); saveLocal(); renderSidebar(); renderBanner(); renderWordList();
+  }
 }
 async function fbRemoveWord(key){
   if(!fbConnected){words=words.filter(w=>w.fbKey!==key);saveLocal();renderSidebar();renderBanner();renderWordList();return;}
-  const{db,ref,remove}=window._fb; await remove(ref(db,`words/${key}`));
+  try{const{db,ref,remove}=window._fb; await remove(ref(db,`words/${key}`));}
+  catch(e){console.warn('fbRemoveWord failed:',e);fbConnected=false;setSyncErr();words=words.filter(w=>w.fbKey!==key);saveLocal();renderSidebar();renderBanner();renderWordList();}
 }
 async function fbMoveWord(key,toGroupId){
   if(!fbConnected){const w=words.find(w=>w.fbKey===key);if(w)w.groupId=toGroupId;saveLocal();renderSidebar();renderWordList();return;}
-  const{db,ref,update}=window._fb; await update(ref(db,`words/${key}`),{groupId:toGroupId||"none"});
+  try{const{db,ref,update}=window._fb; await update(ref(db,`words/${key}`),{groupId:toGroupId||"none"});}
+  catch(e){console.warn('fbMoveWord failed:',e);fbConnected=false;setSyncErr();const w=words.find(w=>w.fbKey===key);if(w)w.groupId=toGroupId;saveLocal();renderSidebar();renderWordList();}
 }
 async function fbPushGroup(obj){
   if(!fbConnected){groups.push(obj);saveLocal();renderSidebar();return null;}
-  const{db,ref,push}=window._fb; const r=await push(ref(db,'groups'),obj); return r.key;
+  try{const{db,ref,push}=window._fb; const r=await push(ref(db,'groups'),obj); return r.key;}
+  catch(e){console.warn('fbPushGroup failed:',e);fbConnected=false;setSyncErr();groups.push(obj);saveLocal();renderSidebar();return null;}
 }
 async function fbRemoveGroup(key){
   if(!fbConnected){groups=groups.filter(g=>g.fbKey!==key);saveLocal();return;}
-  const{db,ref,remove}=window._fb; await remove(ref(db,`groups/${key}`));
+  try{const{db,ref,remove}=window._fb; await remove(ref(db,`groups/${key}`));}
+  catch(e){console.warn('fbRemoveGroup failed:',e);fbConnected=false;setSyncErr();groups=groups.filter(g=>g.fbKey!==key);saveLocal();}
 }
 async function fbRenameGroup(key,name){
   if(!fbConnected){const g=groups.find(g=>g.fbKey===key);if(g)g.name=name;saveLocal();return;}
-  const{db,ref,update}=window._fb; await update(ref(db,`groups/${key}`),{name});
+  try{const{db,ref,update}=window._fb; await update(ref(db,`groups/${key}`),{name});}
+  catch(e){console.warn('fbRenameGroup failed:',e);fbConnected=false;setSyncErr();const g=groups.find(g=>g.fbKey===key);if(g)g.name=name;saveLocal();}
 }
 
 // ══════════════════════════════════════════════════════
